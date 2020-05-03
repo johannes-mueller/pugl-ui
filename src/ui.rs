@@ -1,12 +1,13 @@
 //#![feature(get_type_id)]
 
-use std::collections::VecDeque;
+use std::collections::{VecDeque,HashMap};
 use std::ptr;
 
 use cairo;
 
 use pugl_sys::pugl::*;
 
+use crate::layout::*;
 use crate::widget::*;
 
 pub enum EventState {
@@ -23,71 +24,24 @@ impl EventState {
     }
 }
 
-type Spacing = f64;
-
-pub enum LayoutDirection {
-    Front,
-    Back
-}
-
-#[derive(Debug)]
-pub struct StackLayouter {
-    padding: Spacing,
-    spacing: Spacing,
-    subnodes: VecDeque<Id>
-}
-
-impl StackLayouter {
-    pub fn new(padding: Spacing, spacing: Spacing) -> StackLayouter {
-        StackLayouter {
-            padding,
-            spacing,
-            subnodes: VecDeque::new()
-        }
-    }
-}
-
-impl Default for StackLayouter {
-    fn default() -> StackLayouter {
-        StackLayouter::new(10.0, 5.0)
-    }
-}
-
-#[derive(Debug)]
-pub enum Layouter {
-    None,
-    Vertical(StackLayouter),
-    Horizontal(StackLayouter),
-//    Grid(Spacing, Spacing)
-}
-
-pub enum LayoutTarget {
-    Vertical(LayoutDirection),
-    Horizontal(LayoutDirection)
-}
-
-#[derive(Debug)]
-struct WidgetNode {
-    id: Id,
-    layouter: Layouter,
-    children: Vec<WidgetNode>
+//#[derive(Debug)]
+pub struct WidgetNode {
+    pub(crate) id: Id,
+    layouter: Option<Box<dyn LayouterImpl>>,
+    pub(crate) children: Vec<WidgetNode>
 }
 
 impl WidgetNode {
     fn new(id: Id) -> WidgetNode {
         WidgetNode {
             id,
-            layouter: Layouter::None,
+            layouter: None,
             children: Vec::new()
         }
     }
 
-    fn new_layouting(id: Id, layouter: Layouter) -> WidgetNode {
-        WidgetNode {
-            id,
-            layouter,
-            children: Vec::new()
-        }
+    pub fn set_layouter(&mut self, layouter: Box<dyn LayouterImpl>) {
+	self.layouter = Some(layouter);
     }
 
     fn search(&self, path: VecDeque<Id>, id: Id) -> (VecDeque<Id>, bool) {
@@ -115,166 +69,46 @@ impl WidgetNode {
         }
     }
 
-    fn pack(&mut self, widget: Id, target: LayoutTarget) {
-        let subnode_id = match self.children.iter().position(|ref node| node.id == widget) {
+    fn pack<T: Layouter>(&mut self, widget: Id, mut parent: LayoutWidgetHandle<T>, target: T::Target) {
+	let subnode_id = match self.children.iter().position(|ref node| node.id == widget) {
             Some(id) => id,
             None => {
                 return;
             }
         };
-        match self.layouter {
-            Layouter::Vertical(ref mut sl) => {
-                if let LayoutTarget::Vertical(direction) = target {
-                    match direction {
-                        LayoutDirection::Back  => sl.subnodes.push_back(subnode_id),
-                        LayoutDirection::Front => sl.subnodes.push_front(subnode_id)
-                    };
-                } else {
-                    panic!("Received non vertical target for vertical layout")
-                };
-            },
-            Layouter::Horizontal(ref mut sl) => {
-                if let LayoutTarget::Horizontal(direction) = target {
-                    match direction {
-                        LayoutDirection::Back  => sl.subnodes.push_back(subnode_id),
-                        LayoutDirection::Front => sl.subnodes.push_front(subnode_id)
-                    };
-                } else {
-                    panic!("Received non horizontal target for horizontal layout")
-                };
-            },
-            Layouter::None => {
-                panic!("Packing to none layouter requested!")
-            }
-        }
+	let layout_impl_0 = &mut self.layouter.as_deref_mut().expect("::pack(), no layouter found");
+	let layout_impl_1 = layout_impl_0.downcast_mut::<T::Implementor>();
+
+	let layout_impl_2 = layout_impl_1.expect("downcast of layouter failed");
+
+	parent.layouter().pack(layout_impl_2, subnode_id, target);
     }
 
-    fn apply_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>, orig_pos: Coord) {
+    pub(crate) fn apply_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>, orig_pos: Coord) {
         let size_avail = widgets[self.id].size();
 
-        match self.layouter {
-            Layouter::Horizontal(ref sl) => {
-                let sized_widgets = sl.subnodes.iter().fold (0, | acc, sn | {
-                    if widgets[self.children[*sn].id].min_size().w > 0.0 {
-                        acc + 1
-                    } else {
-                        acc
-                    }
-                });
-                let width_avail = size_avail.w - sl.spacing * sized_widgets as f64 - 2.*sl.padding;
-                let height_avail = size_avail.h - 2.*sl.padding;
-                let (expanders, width_avail) = sl.subnodes.iter().fold((0, width_avail), |(exp, wa), sn| {
-                    let wgt = &widgets[self.children[*sn].id];
-                    (if wgt.width_expandable() { exp + 1 } else { exp },  wa - wgt.size().w)
-                });
-                let expand_each = width_avail / expanders as f64;
-
-                let mut pos = orig_pos + Coord { x: sl.padding, y: sl.padding };
-                for sn in sl.subnodes.iter() {
-                    let wsize = {
-                        let widget = &mut widgets[self.children[*sn].id];
-                        if widget.width_expandable() {
-                            widget.expand_width(expand_each);
-                        }
-                        if widget.height_expandable() {
-                            widget.set_height(height_avail);
-                        }
-                        widget.set_pos (&pos);
-                        widget.size()
-                    };
-                    self.children[*sn].apply_sizes(widgets, pos);
-                    if wsize.w > 0.0 {
-                        pos += Coord { x: wsize.w + sl.spacing, y: 0.0 };
-                    }
-                }
-            },
-            Layouter::Vertical(ref sl) => {
-                let sized_widgets = sl.subnodes.iter().fold (0, | acc, sn | {
-                    if widgets[self.children[*sn].id].min_size().h > 0.0 {
-                        acc + 1
-                    } else {
-                        acc
-                    }
-                });
-                let height_avail = size_avail.h - sl.spacing * sized_widgets as f64 - 2.*sl.padding;
-                let width_avail = size_avail.w - 2.*sl.padding;
-                let (expanders, height_avail) = sl.subnodes.iter().fold((0, height_avail), |(exp, wa), sn| {
-                    let wgt = &widgets[self.children[*sn].id];
-                    (if wgt.height_expandable() { exp + 1 } else { exp },  wa - wgt.size().h)
-                });
-                let expand_each = height_avail / expanders as f64;
-
-                let mut pos = Coord { x: sl.padding, y: sl.padding };
-                for sn in sl.subnodes.iter() {
-                    let wsize = {
-                        let widget = &mut widgets[self.children[*sn].id];
-                        if widget.height_expandable() {
-                            widget.expand_height(expand_each);
-                        }
-                        if widget.width_expandable() {
-                            widget.set_width(width_avail);
-                        }
-                        widget.set_pos (&pos);
-                        widget.size()
-                    };
-                    self.children[*sn].apply_sizes(widgets, pos);
-                    if wsize.h > 0.0 {
-                        pos += Coord { x: 0.0, y: wsize.h + sl.spacing };
-                    }
-                }
-            },
-            Layouter::None => {}
-        }
+	if let Some(layouter) = &self.layouter {
+	    layouter.apply_sizes(widgets, &self.children, orig_pos, size_avail);
+	}
     }
 
-    fn calc_widget_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>) -> Size {
+    pub(crate) fn calc_widget_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>) -> Size {
         if self.children.is_empty() {
             let wgt = &mut widgets[self.id];
             let size = wgt.min_size();
             wgt.set_size(&size);
+
             return size;
         }
 
-        let mut need = Size::default();
+	let size = self.layouter
+	    .as_ref()
+	    .expect("::calc_widget_sizes() no layouter found")
+	    .calc_widget_sizes(widgets, &self.children);
 
-        match self.layouter {
-            Layouter::Horizontal(ref sl) => {
-                need.w += sl.padding;
-                for subnode in sl.subnodes.iter() {
+	widgets[self.id].set_size(&size);
 
-                    let size = self.children[*subnode].calc_widget_sizes(widgets);
-                    need.w += size.w;
-                    if size.h > need.h {
-                        need.h = size.h;
-                    }
-                    need.w += sl.spacing;
-                }
-                need.w += sl.padding - sl.spacing;
-                need.h += 2.*sl.padding;
-
-                widgets[self.id].set_size(&need);
-            },
-            Layouter::Vertical(ref sl) => {
-                need.h += sl.padding;
-                for subnode in sl.subnodes.iter() {
-
-                    let size = self.children[*subnode].calc_widget_sizes(widgets);
-                    need.h += size.h;
-                    if size.w > need.w {
-                        need.w = size.w;
-                    }
-                    need.h += sl.spacing
-                }
-                need.w += 2.*sl.padding;
-                need.h += sl.padding - sl.spacing;
-
-                widgets[self.id].set_size(&need);
-            },
-            Layouter::None => {
-                panic!("Non layouter called, this shouldn't happen. Or should it?");
-            }
-        }
-        need
+	size
     }
 }
 
@@ -282,82 +116,67 @@ impl WidgetNode {
 pub struct UI {
     widgets: Vec<Box<dyn Widget>>,
     root_widget: WidgetNode,
+    unlayouted_nodes: HashMap<Id, WidgetNode>,
+    root_widget_handle: LayoutWidgetHandle<VerticalLayouter>,
     view: PuglViewFFI,
     focused_widget: Id,
     close_request_issued: bool,
 }
 
 impl UI {
-    pub fn new<T, F> (factory: F, layouter: Layouter) -> UI
-    where T : Widget + 'static, F: WidgetFactory<T> {
+    pub fn new<T, F> (factory: F) -> UI
+    where T: Widget + 'static,
+	  F: WidgetFactory<T> {
         let stub = WidgetStub::new ();
         let root_widget = Box::new(factory.make_widget(stub));
+	let root_widget_handle = LayoutWidgetHandle::new(0, VerticalLayouter {});
         UI {
             view: ptr::null_mut(),
             root_widget: WidgetNode {
                 id: 0,
-                layouter,
+                layouter: Some(VerticalLayouter::new_implementor()),
                 children: vec![]
             },
+	    unlayouted_nodes: HashMap::new(),
+	    root_widget_handle,
             focused_widget: 0,
             widgets: vec![root_widget],
             close_request_issued: false,
         }
     }
 
-    pub fn new_layouting_widget<T, F>(&mut self, parent: Id, layouter: Layouter, factory: F) -> Id
-    where T : Widget + 'static, F: WidgetFactory<T> {
+    pub fn new_widget<T, F>(&mut self, factory: F) -> Id
+    where T: Widget + 'static,
+	  F: WidgetFactory<T> {
         let id = self.widgets.len();
-        if parent >= id {
-            panic!("invalid parent");
-        }
-        let path = VecDeque::new();
-        let (path, _) = self.root_widget.search(path, parent);
-        {
-            let node = self.root_widget.get_node_by_path(path);
 
-            match node.layouter {
-                Layouter::None => panic!("Request to add widget to non layouting node"),
-                _ => {}
-            };
-
-            node.children.push (WidgetNode::new_layouting(id, layouter));
-        }
-        let stub = WidgetStub::new();
-        self.widgets.push(Box::new(factory.make_widget(stub)));
-
-        id
-    }
-
-    pub fn new_widget<T, F>(&mut self, parent: Id, factory: F) -> Id
-    where T : Widget + 'static, F: WidgetFactory<T> {
-        let id = self.widgets.len();
-        if parent >= id {
-            panic!("invalid parent");
-        }
-        let path = VecDeque::new();
-        let (path, _) = self.root_widget.search(path, parent);
-
-        let node = self.root_widget.get_node_by_path(path);
-        node.children.push (WidgetNode::new(id));
         let stub = WidgetStub::new ();
-
         self.widgets.push(Box::new(factory.make_widget(stub)));
 
-        id
+	self.unlayouted_nodes.insert(id, WidgetNode::new(id));
+
+	id
     }
 
-    pub fn pack_to_layout(&mut self, widget: Id, target: LayoutTarget) {
-        let path = VecDeque::new();
-        let (mut path, _) = self.root_widget.search(path, widget);
-        path.pop_back();
+    pub fn new_layouter<T: Layouter>(&mut self, layouter: T) -> LayoutWidgetHandle<T> {
+	let lw = self.new_widget(LayoutWidgetFactory {});
+	self.set_layouter(lw, layouter)
+    }
 
-        let node = if path.is_empty() {
-            &mut self.root_widget
-        } else {
-            self.root_widget.get_node_by_path(path)
-        };
-        node.pack(widget, target);
+    pub fn set_layouter<T: Layouter>(&mut self, id: Id, layouter: T) -> LayoutWidgetHandle<T> {
+	self.find_node(id).set_layouter(T::new_implementor());
+	LayoutWidgetHandle::new(id, layouter)
+    }
+
+    pub fn pack_to_layout<T: Layouter>(&mut self, widget: Id, parent: LayoutWidgetHandle<T>, target: T::Target) {
+
+	let new_node = self.unlayouted_nodes.remove(&widget).expect("widget already layouted?");
+
+        let node = self.find_node(parent.widget());
+
+        node.children.push (new_node);
+
+        node.pack(widget, parent, target);
     }
 
     pub fn do_layout(&mut self) {
@@ -396,6 +215,10 @@ impl UI {
 
     pub fn close_request_issued(&self) -> bool {
 	self.close_request_issued
+    }
+
+    pub fn root_layout(&self) -> LayoutWidgetHandle<VerticalLayouter> {
+	self.root_widget_handle
     }
 
     pub fn widget<T>(&mut self, id: Id) -> &mut T
@@ -445,6 +268,17 @@ impl UI {
             }
         }
         path
+    }
+
+    fn find_node(&mut self, id: Id) -> &mut WidgetNode {
+	match self.unlayouted_nodes.get_mut(&id) {
+	    Some(l) => l,
+	    None => {
+		let path = VecDeque::new();
+		let (path, _) = self.root_widget.search(path, id);
+		self.root_widget.get_node_by_path(path)
+	    }
+	}
     }
 }
 

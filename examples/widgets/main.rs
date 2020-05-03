@@ -76,26 +76,24 @@ impl WidgetFactory<RootWidget> for RootWidgetFactory {
 }
 
 fn main() {
-    let mut ui = Box::new(UI::new( RootWidgetFactory {}, Layouter::Vertical(StackLayouter::default())));
+    let mut ui = Box::new(UI::new( RootWidgetFactory {}));
 
-    let dials = ui.new_layouting_widget (0, Layouter::Horizontal(StackLayouter::default()),
-                                         LayoutWidgetFactory {}
+    let dial_layout = ui.new_layouter(HorizontalLayouter {});
 
-    );
+    let dial1 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
+    let dial2 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
+    let dial3 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
 
-    let dial1 = ui.new_widget(dials, dial::new(0.0, 1.0, 0.1));
-    let dial2 = ui.new_widget(dials, dial::new(0.0, 1.0, 0.1));
-    let dial3 = ui.new_widget(dials, dial::new(0.0, 1.0, 0.1));
-
-    let reset_button = ui.new_widget(0, button::new("Reset"));
+    let reset_button = ui.new_widget(button::new("Reset"));
 
     println!("starting layouts");
-    ui.pack_to_layout(dial1, LayoutTarget::Horizontal(LayoutDirection::Front));
-    ui.pack_to_layout(dial2, LayoutTarget::Horizontal(LayoutDirection::Front));
-    ui.pack_to_layout(dial3, LayoutTarget::Horizontal(LayoutDirection::Front));
 
-    ui.pack_to_layout(dials, LayoutTarget::Vertical(LayoutDirection::Front));
-    ui.pack_to_layout(reset_button, LayoutTarget::Vertical(LayoutDirection::Front));
+    ui.pack_to_layout(dial1, dial_layout, StackDirection::Front);
+    ui.pack_to_layout(dial2, dial_layout, StackDirection::Front);
+    ui.pack_to_layout(dial3, dial_layout, StackDirection::Front);
+
+    ui.pack_to_layout(dial_layout.widget(), ui.root_layout(), StackDirection::Front);
+    ui.pack_to_layout(reset_button, ui.root_layout(), StackDirection::Front);
 
     ui.do_layout();
 

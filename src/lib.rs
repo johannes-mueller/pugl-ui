@@ -114,8 +114,10 @@ mod tests {
             cr.select_font_face ("Hack", cairo::FontSlant::Normal, cairo::FontWeight::Normal);
             cr.set_font_size (20.0);
 
+	    let extents = cr.text_extents(self.name);
+
             cr.save();
-            cr.translate (pos.x + size.w/2., pos.y + size.h/2.);
+            cr.translate (pos.x + (size.w-extents.width)/2., pos.y + (size.h+extents.height)/2.);
 
             cr.show_text (self.name);
 
@@ -188,39 +190,36 @@ mod tests {
 	    let clicked = self.clicked;
 	    self.clicked = false;
 	    clicked
+	}
     }
-}
 
 
     #[test]
     fn view_tk() {
-        let mut ui = Box::new(UI::new( RootWidgetFactory {}, Layouter::Vertical(StackLayouter::default())));
+        let mut ui = Box::new(UI::new(RootWidgetFactory {}));
 
-        let lw1 = ui.new_layouting_widget (0, Layouter::Horizontal(StackLayouter::default()),
-                                           LayoutWidgetFactory {}
+	let layouter = ui.new_layouter(HorizontalLayouter {});
 
-        );
-
-        let rw2 = ui.new_widget (0, RectWidgetFactory {
+        let rw2 = ui.new_widget (RectWidgetFactory {
             color: (1., 0., 0.),
             size: Size { w: 128., h: 64. },
             name: "red"
         });
 
-        let rw4 = ui.new_widget (lw1, RectWidgetFactory {
+        let rw4 = ui.new_widget (RectWidgetFactory {
             color: (0., 1., 1.),
             size: Size { w: 512., h: 129. },
             name: "Eĥoŝanĝo ĉiuĵaŭde"
         });
 
 
-        let sp1 = ui.new_widget (lw1, SpacerFactory {});
-        println!("spacing widget id: {}", sp1);
-        ui.pack_to_layout(lw1, LayoutTarget::Vertical(LayoutDirection::Back));
-        ui.pack_to_layout(rw2, LayoutTarget::Vertical(LayoutDirection::Back));
+        let sp1 = ui.new_widget (SpacerFactory {});
 
-        ui.pack_to_layout(sp1, LayoutTarget::Horizontal(LayoutDirection::Back));
-        ui.pack_to_layout(rw4, LayoutTarget::Horizontal(LayoutDirection::Back));
+        ui.pack_to_layout(sp1, layouter, StackDirection::Back);
+
+        ui.pack_to_layout(layouter.widget(), ui.root_layout(), StackDirection::Back);
+        ui.pack_to_layout(rw2, layouter, StackDirection::Back);
+        ui.pack_to_layout(rw4, ui.root_layout(), StackDirection::Front);
         ui.do_layout();
 
         let view = PuglView::make_view(ui, std::ptr::null_mut());
