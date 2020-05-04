@@ -36,7 +36,7 @@ mod tests {
 
     impl Widget for RootWidget {
         fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
-            cr.set_source_rgb (0., 1., 0.);
+            cr.set_source_rgb (0.2, 0.2, 0.2);
             let size = self.size();
             cr.rectangle (0., 0., size.w, size.h);
             cr.fill ();
@@ -95,6 +95,9 @@ mod tests {
         color: (f64, f64, f64),
         min_size: Size,
         name: &'static str,
+
+	width_expandable: bool,
+	height_expandable: bool,
 
 	clicked: bool
     }
@@ -155,7 +158,17 @@ mod tests {
                 _ => event_not_processed!()
             }.and_then (|es| es.pass_event (ev))
         }
+
         fn min_size(&self) -> Size { self.min_size }
+
+	fn width_expandable(&self) -> bool {
+	    self.width_expandable
+	}
+
+	fn height_expandable(&self) -> bool {
+	    self.height_expandable
+	}
+
         fn stub (&self) -> &WidgetStub {
             &self.stub
         }
@@ -170,6 +183,8 @@ mod tests {
     struct RectWidgetFactory {
         color: (f64, f64, f64),
         size: Size,
+	width_expandable: bool,
+	height_expandable: bool,
         name: &'static str
     }
     impl WidgetFactory<RectWidget> for RectWidgetFactory {
@@ -178,6 +193,8 @@ mod tests {
                 stub: stub,
                 color: self.color,
                 min_size: self.size,
+		width_expandable: self.width_expandable,
+		height_expandable: self.height_expandable,
                 name: self.name,
 		clicked: false
             }
@@ -198,38 +215,131 @@ mod tests {
     fn view_tk() {
         let mut ui = Box::new(UI::new(RootWidgetFactory {}));
 
-	let layouter = ui.new_layouter::<HorizontalLayouter>();
-
-	ui.layouter_handle(ui.root_layout()).set_padding(0.).set_spacing(10.);
-	ui.layouter_handle(layouter).set_spacing(0.).set_padding(0.);
-
-        let rw2 = ui.new_widget (RectWidgetFactory {
+        let red = ui.new_widget (RectWidgetFactory {
             color: (1., 0., 0.),
             size: Size { w: 128., h: 64. },
+	    width_expandable: false,
+	    height_expandable: false,
             name: "ruĝa"
         });
 
-        let rw3 = ui.new_widget (RectWidgetFactory {
+        let blue = ui.new_widget (RectWidgetFactory {
             color: (0., 0., 1.),
             size: Size { w: 128., h: 64. },
+	    width_expandable: false,
+	    height_expandable: false,
             name: "blua"
         });
 
+	let green = ui.new_widget (RectWidgetFactory {
+            color: (0., 1., 0.),
+            size: Size { w: 128., h: 64. },
+	    width_expandable: false,
+	    height_expandable: false,
+            name: "verda"
+        });
 
-        let rw4 = ui.new_widget (RectWidgetFactory {
+	let yellow = ui.new_widget (RectWidgetFactory {
+            color: (1., 1., 0.),
+            size: Size { w: 128., h: 64. },
+	    width_expandable: true,
+	    height_expandable: false,
+            name: "flava"
+        });
+
+	let pink = ui.new_widget (RectWidgetFactory {
+            color: (1., 0., 1.),
+            size: Size { w: 128., h: 64. },
+	    width_expandable: false,
+	    height_expandable: true,
+            name: "viola"
+        });
+
+	let orange = ui.new_widget (RectWidgetFactory {
+            color: (1., 0.5, 0.),
+            size: Size { w: 128., h: 64. },
+	    width_expandable: true,
+	    height_expandable: false,
+            name: "oranĝa"
+        });
+
+	let light_gray = ui.new_widget (RectWidgetFactory {
+            color: (0.8, 0.8, 0.8),
+            size: Size { w: 128., h: 64. },
+	    width_expandable: true,
+	    height_expandable: false,
+            name: "hela"
+        });
+
+	let mid_gray = ui.new_widget (RectWidgetFactory {
+            color: (0.6, 0.6, 0.6),
+            size: Size { w: 128., h: 64. },
+	    width_expandable: true,
+	    height_expandable: true,
+            name: "mezhela"
+        });
+
+	let dark_gray = ui.new_widget (RectWidgetFactory {
+            color: (0.4, 0.4, 0.4),
+            size: Size { w: 128., h: 64. },
+	    width_expandable: false,
+	    height_expandable: false,
+            name: "malhela"
+        });
+
+	let white = ui.new_widget (RectWidgetFactory {
+            color: (1., 1., 1.),
+            size: Size { w: 32., h: 32. },
+	    width_expandable: false,
+	    height_expandable: true,
+            name: "b"
+        });
+
+
+
+	let cyan = ui.new_widget (RectWidgetFactory {
             color: (0., 1., 1.),
             size: Size { w: 512., h: 128. },
+	    width_expandable: false,
+	    height_expandable: false,
             name: "Eĥoŝanĝo ĉiuĵaŭde"
         });
 
 
-        //let sp1 = ui.new_widget (SpacerFactory {});
-        //ui.pack_to_layout(sp1, layouter, StackDirection::Back);
+	let blue_red_lt = ui.new_layouter::<HorizontalLayouter>();
+	let green_yellow_lt = ui.new_layouter::<HorizontalLayouter>();
+	let pink_orange_gray_lt = ui.new_layouter::<HorizontalLayouter>();
+	let gray_lt = ui.new_layouter::<VerticalLayouter>();
 
-        ui.pack_to_layout(layouter.widget(), ui.root_layout(), StackDirection::Back);
-        ui.pack_to_layout(rw2, layouter, StackDirection::Back);
-        ui.pack_to_layout(rw3, layouter, StackDirection::Back);
-        ui.pack_to_layout(rw4, ui.root_layout(), StackDirection::Front);
+	ui.layouter_handle(ui.root_layout()).set_padding(0.).set_spacing(10.);
+	ui.layouter_handle(blue_red_lt).set_spacing(0.).set_padding(0.);
+	ui.layouter_handle(green_yellow_lt).set_spacing(10.0).set_padding(0.);
+
+
+        ui.pack_to_layout(cyan, ui.root_layout(), StackDirection::Front);
+
+	ui.pack_to_layout(green_yellow_lt.widget(), ui.root_layout(), StackDirection::Back);
+        ui.pack_to_layout(blue_red_lt.widget(), ui.root_layout(), StackDirection::Back);
+	ui.pack_to_layout(red, blue_red_lt, StackDirection::Back);
+	let sp = ui.new_spacer();
+	ui.pack_to_layout(sp, blue_red_lt, StackDirection::Back);
+        ui.pack_to_layout(blue, blue_red_lt, StackDirection::Back);
+
+	ui.pack_to_layout(green, green_yellow_lt, StackDirection::Front);
+	ui.pack_to_layout(yellow, green_yellow_lt, StackDirection::Front);
+
+	ui.pack_to_layout(pink_orange_gray_lt.widget(), ui.root_layout(), StackDirection::Back);
+	ui.pack_to_layout(pink, pink_orange_gray_lt, StackDirection::Back);
+	ui.pack_to_layout(orange, pink_orange_gray_lt, StackDirection::Back);
+	//let sp = ui.new_spacer();
+	//ui.pack_to_layout(sp, pink_orange_gray_lt, StackDirection::Back);
+	ui.pack_to_layout(gray_lt.widget(), pink_orange_gray_lt, StackDirection::Back);
+	ui.pack_to_layout(white, pink_orange_gray_lt, StackDirection::Back);
+
+	ui.pack_to_layout(mid_gray, gray_lt, StackDirection::Back);
+	ui.pack_to_layout(light_gray, gray_lt, StackDirection::Back);
+	ui.pack_to_layout(dark_gray, gray_lt, StackDirection::Front);
+
         ui.do_layout();
 
         let view = PuglView::make_view(ui, std::ptr::null_mut());

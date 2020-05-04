@@ -170,6 +170,10 @@ impl UI {
 	LayoutWidgetHandle::<T>::new(id)
     }
 
+    pub fn new_spacer(&mut self) -> Id {
+	self.new_widget(SpacerFactory {})
+    }
+
     pub fn layouter_handle<T: Layouter>(&mut self, layouter: LayoutWidgetHandle<T>) -> &mut T::Implementor {
 	self.find_node(layouter.widget()).layouter_impl::<T>()
     }
@@ -186,6 +190,9 @@ impl UI {
     }
 
     pub fn do_layout(&mut self) {
+	if self.unlayouted_nodes.len() > 0 {
+	    eprintln!("WARNING: Rendering layout with {} unlayouted widgets!", self.unlayouted_nodes.len());
+	}
         let orig_size = self.widgets[0].size();
         let new_size = {
             let widgets = &mut self.widgets;

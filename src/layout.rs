@@ -90,7 +90,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
                 acc
             }
         });
-        let width_avail = size_avail.w - self.d.spacing * sized_widgets as f64 - 2.*self.d.padding;
+        let width_avail = size_avail.w - self.d.spacing * (sized_widgets - 1) as f64  - 2.*self.d.padding;
         let height_avail = size_avail.h - 2.*self.d.padding;
         let (expanders, width_avail) = self.d.subnodes.iter().fold((0, width_avail), |(exp, wa), sn| {
             let wgt = &widgets[children[*sn].id];
@@ -190,7 +190,7 @@ impl LayouterImpl for VerticalLayouterImpl {
                 acc
             }
         });
-        let height_avail = size_avail.h - self.d.spacing * sized_widgets as f64 - 2.*self.d.padding;
+        let height_avail = size_avail.h - self.d.spacing * (sized_widgets - 1) as f64 - 2.*self.d.padding;
         let width_avail = size_avail.w - 2.*self.d.padding;
         let (expanders, height_avail) = self.d.subnodes.iter().fold((0, height_avail), |(exp, wa), sn| {
             let wgt = &widgets[children[*sn].id];
