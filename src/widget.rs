@@ -87,6 +87,10 @@ pub trait Widget : DowncastSync {
         }
     }
 
+    fn pointer_enter(&mut self) {}
+
+    fn pointer_leave(&mut self) {}
+
     fn needs_repaint(&mut self) -> bool {
 	self.stub_mut().needs_repaint()
     }

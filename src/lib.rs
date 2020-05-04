@@ -99,6 +99,8 @@ mod tests {
 	width_expandable: bool,
 	height_expandable: bool,
 
+	under_pointer: bool,
+
 	clicked: bool
     }
 
@@ -112,7 +114,11 @@ mod tests {
             cr.rectangle (pos.x, pos.y, size.w, size.h);
             cr.fill ();
 
-            cr.set_source_rgb (0., 0., 0.);
+	    if self.under_pointer {
+		cr.set_source_rgb(0.5, 0., 0.);
+	    } else {
+		cr.set_source_rgb (0., 0., 0.);
+	    }
 
             cr.select_font_face ("Hack", cairo::FontSlant::Normal, cairo::FontWeight::Normal);
             cr.set_font_size (20.0);
@@ -135,7 +141,7 @@ mod tests {
         fn event (&mut self, ev: Event) -> Option<Event> {
             match ev.data {
                 EventType::MouseMove (_mm) => {
-                    println!("mouse move {} {} on {}", ev.context.pos.x, ev.context.pos.y, self.name);
+                    // println!("mouse move {} {} on {}", ev.context.pos.x, ev.context.pos.y, self.name);
                     event_processed!()
                 }
                 EventType::MouseButtonRelease (btn) => {
@@ -159,6 +165,22 @@ mod tests {
                 _ => event_not_processed!()
             }.and_then (|es| es.pass_event (ev))
         }
+
+	fn pointer_enter(&mut self) {
+	    println!("::pointer_enter() {}", self.name);
+	    if !self.under_pointer {
+		self.under_pointer = true;
+		self.ask_for_repaint()
+	    }
+	}
+
+	fn pointer_leave(&mut self) {
+	    println!("::pointer_leave() {}", self.name);
+	    if self.under_pointer {
+		self.under_pointer = false;
+		self.ask_for_repaint()
+	    }
+	}
 
         fn min_size(&self) -> Size { self.min_size }
 
@@ -197,7 +219,8 @@ mod tests {
 		width_expandable: self.width_expandable,
 		height_expandable: self.height_expandable,
                 name: self.name,
-		clicked: false
+		clicked: false,
+		under_pointer: false
             }
         }
     }
@@ -319,10 +342,10 @@ mod tests {
 	ui.layouter_handle(green_yellow_lt).set_spacing(10.0).set_padding(0.);
 	ui.layouter_handle(pink_orange_gray_lt).set_padding(0.0).set_spacing(15.0);
 
-        ui.pack_to_layout(cyan, ui.root_layout(), StackDirection::Front);
+	ui.pack_to_layout(cyan, ui.root_layout(), StackDirection::Front);
 
 	ui.pack_to_layout(green_yellow_lt.widget(), ui.root_layout(), StackDirection::Back);
-        ui.pack_to_layout(blue_red_lt.widget(), ui.root_layout(), StackDirection::Back);
+	ui.pack_to_layout(blue_red_lt.widget(), ui.root_layout(), StackDirection::Back);
 	ui.pack_to_layout(red, blue_red_lt, StackDirection::Back);
 	ui.add_spacer(blue_red_lt, StackDirection::Back);
         ui.pack_to_layout(blue, blue_red_lt, StackDirection::Back);
@@ -331,9 +354,9 @@ mod tests {
 	ui.pack_to_layout(yellow, green_yellow_lt, StackDirection::Front);
 
 	ui.pack_to_layout(pink_orange_gray_lt.widget(), ui.root_layout(), StackDirection::Back);
+	ui.pack_to_layout(gray_lt.widget(), pink_orange_gray_lt, StackDirection::Back);
 	ui.pack_to_layout(pink, pink_orange_gray_lt, StackDirection::Back);
 	ui.pack_to_layout(orange, pink_orange_gray_lt, StackDirection::Back);
-	ui.pack_to_layout(gray_lt.widget(), pink_orange_gray_lt, StackDirection::Back);
 	ui.pack_to_layout(white, pink_orange_gray_lt, StackDirection::Back);
 
 	ui.pack_to_layout(mid_gray, gray_lt, StackDirection::Back);

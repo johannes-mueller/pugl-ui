@@ -144,8 +144,9 @@ pub struct UI {
     root_widget_handle: LayoutWidgetHandle<VerticalLayouter>,
     view: PuglViewFFI,
     focused_widget: Id,
-    close_request_issued: bool,
-    have_focus: bool
+    widget_under_pointer: Id,
+    have_focus: bool,
+    close_request_issued: bool
 }
 
 impl UI {
@@ -166,8 +167,9 @@ impl UI {
 	    root_widget_handle,
             focused_widget: 0,
             widgets: vec![root_widget],
-            close_request_issued: false,
-	    have_focus: false
+	    have_focus: false,
+	    widget_under_pointer: 0,
+            close_request_issued: false
         }
     }
 
@@ -359,6 +361,15 @@ impl PuglViewTrait for UI {
 
         let mut event_path = self.event_path(&self.root_widget, ev.context.pos, VecDeque::new());
         let mut evop = Some(ev);
+
+	if let Some(id) = event_path.back() {
+	    if self.widget_under_pointer != *id {
+		self.widgets[self.widget_under_pointer].pointer_leave();
+		self.widgets[*id].pointer_enter();
+		self.widget_under_pointer = *id;
+	    }
+	}
+
         while let Some(id) = event_path.pop_back() {
             evop = match evop {
                 Some(ev) => {
