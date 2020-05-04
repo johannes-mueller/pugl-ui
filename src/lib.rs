@@ -198,7 +198,7 @@ mod tests {
     fn view_tk() {
         let mut ui = Box::new(UI::new(RootWidgetFactory {}));
 
-	let layouter = ui.new_layouter(HorizontalLayouter {});
+	let layouter = ui.new_layouter::<HorizontalLayouter>();
 
         let rw2 = ui.new_widget (RectWidgetFactory {
             color: (1., 0., 0.),

@@ -15,7 +15,7 @@ pub trait LayouterImpl: DowncastSync {
 }
 impl_downcast!(sync LayouterImpl);
 
-pub trait Layouter {
+pub trait Layouter : Default {
     type Target;
     type Implementor: LayouterImpl;
     fn new_implementor() -> Box<dyn LayouterImpl>;
@@ -54,7 +54,7 @@ impl StackLayoutData {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct HorizontalLayouter;
 
 pub struct HorizontalLayouterImpl {
@@ -143,7 +143,7 @@ impl Layouter for HorizontalLayouter {
 }
 
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct VerticalLayouter;
 
 pub struct VerticalLayouterImpl {
@@ -291,8 +291,8 @@ pub struct LayoutWidgetHandle<T: Layouter> {
 }
 
 impl<T: Layouter> LayoutWidgetHandle<T> {
-    pub fn new(id: Id, layouter: T) -> LayoutWidgetHandle<T> {
-	LayoutWidgetHandle { id, layouter }
+    pub fn new(id: Id) -> LayoutWidgetHandle<T> {
+	LayoutWidgetHandle { id, layouter: T::default() }
     }
     pub fn widget(&self) -> Id {
 	self.id

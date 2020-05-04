@@ -129,7 +129,7 @@ impl UI {
 	  F: WidgetFactory<T> {
         let stub = WidgetStub::new ();
         let root_widget = Box::new(factory.make_widget(stub));
-	let root_widget_handle = LayoutWidgetHandle::new(0, VerticalLayouter {});
+	let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter>::new(0);
         UI {
             view: ptr::null_mut(),
             root_widget: WidgetNode {
@@ -158,14 +158,14 @@ impl UI {
 	id
     }
 
-    pub fn new_layouter<T: Layouter>(&mut self, layouter: T) -> LayoutWidgetHandle<T> {
+    pub fn new_layouter<T: Layouter>(&mut self) -> LayoutWidgetHandle<T> {
 	let lw = self.new_widget(LayoutWidgetFactory {});
-	self.set_layouter(lw, layouter)
+	self.set_layouter::<T>(lw)
     }
 
-    pub fn set_layouter<T: Layouter>(&mut self, id: Id, layouter: T) -> LayoutWidgetHandle<T> {
+    pub fn set_layouter<T: Layouter>(&mut self, id: Id) -> LayoutWidgetHandle<T> {
 	self.find_node(id).set_layouter(T::new_implementor());
-	LayoutWidgetHandle::new(id, layouter)
+	LayoutWidgetHandle::<T>::new(id)
     }
 
     pub fn pack_to_layout<T: Layouter>(&mut self, widget: Id, parent: LayoutWidgetHandle<T>, target: T::Target) {
