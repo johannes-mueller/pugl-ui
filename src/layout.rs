@@ -85,7 +85,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
     fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
 		   orig_pos: Coord, size_avail: Size) {
 	let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
-            if widgets[children[*sn].id].min_size().w > 0.0 {
+            if widgets[children[*sn].id].sized_width() {
                 acc + 1
             } else {
                 acc
@@ -102,7 +102,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
 
         let mut pos = orig_pos + Coord { x: self.d.padding, y: self.d.padding };
         for sn in self.d.subnodes.iter() {
-            let (width, min_width) = {
+            let (width, sized_width) = {
                 let widget = &mut widgets[children[*sn].id];
 
                 if widget.width_expandable() {
@@ -112,13 +112,13 @@ impl LayouterImpl for HorizontalLayouterImpl {
                     widget.set_height(height_avail);
                 }
                 widget.set_pos (&pos);
-                (widget.size().w, widget.min_size().w)
+                (widget.size().w, widget.sized_width())
             };
             children[*sn].apply_sizes(widgets, pos);
             if width > 0.0 {
                 pos += Coord { x: width, y: 0.0 };
             }
-	    if min_width > 0.0 {
+	    if sized_width {
 		pos += Coord { x: self.d.spacing, y: 0.0 };
 	    }
         }
@@ -126,8 +126,11 @@ impl LayouterImpl for HorizontalLayouterImpl {
 
     fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
 	let mut need = Size::default();
-        need.w += self.d.padding;
-        for subnode in self.d.subnodes.iter() {
+
+        need.w += 2.*self.d.padding;
+        need.h += 2.*self.d.padding;
+
+	for subnode in self.d.subnodes.iter() {
 
             let size = children[*subnode].calc_widget_sizes(widgets);
             need.w += size.w;
@@ -136,8 +139,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
             }
             need.w += self.d.spacing;
         }
-        need.w += self.d.padding - self.d.spacing;
-        need.h += 2.*self.d.padding;
+        need.w -= self.d.spacing;
 
 	need
     }
@@ -193,7 +195,7 @@ impl LayouterImpl for VerticalLayouterImpl {
     fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
 		   orig_pos: Coord, size_avail: Size) {
         let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
-            if widgets[children[*sn].id].min_size().h > 0.0 {
+            if widgets[children[*sn].id].sized_height() {
                 acc + 1
             } else {
                 acc
@@ -210,7 +212,7 @@ impl LayouterImpl for VerticalLayouterImpl {
 
         let mut pos = orig_pos + Coord { x: self.d.padding, y: self.d.padding };
         for sn in self.d.subnodes.iter() {
-            let (height, min_height)  = {
+            let (height, sized_height)  = {
                 let widget = &mut widgets[children[*sn].id];
                 if widget.height_expandable() {
                     widget.expand_height(expand_each);
@@ -219,13 +221,13 @@ impl LayouterImpl for VerticalLayouterImpl {
                     widget.set_width(width_avail);
                 }
                 widget.set_pos (&pos);
-                (widget.size().h, widget.min_size().h)
+                (widget.size().h, widget.sized_height())
             };
             children[*sn].apply_sizes(widgets, pos);
             if height > 0.0 {
                 pos += Coord { x: 0.0, y: height };
             }
-	    if min_height > 0.0 {
+	    if sized_height {
 		pos += Coord { x: 0.0, y:  self.d.spacing };
 	    }
         }
@@ -233,8 +235,12 @@ impl LayouterImpl for VerticalLayouterImpl {
     }
 
     fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
+
 	let mut need = Size::default();
-        need.h += self.d.padding;
+
+	need.h += 2.*self.d.padding;
+        need.w += 2.*self.d.padding;
+
         for subnode in self.d.subnodes.iter() {
 
             let size = children[*subnode].calc_widget_sizes(widgets);
@@ -244,8 +250,7 @@ impl LayouterImpl for VerticalLayouterImpl {
             }
             need.h += self.d.spacing
         }
-        need.w += 2.*self.d.padding;
-        need.h += self.d.padding - self.d.spacing;
+        need.h -= self.d.spacing;
 
 	need
     }
@@ -298,6 +303,9 @@ impl Widget for LayoutWidget {
 
     fn width_expandable(&self) -> bool { self.width_expandable }
     fn height_expandable(&self) -> bool { self.height_expandable }
+
+    fn sized_width(&self) -> bool { true }
+    fn sized_height(&self) -> bool { true }
 }
 
 pub struct LayoutWidgetFactory {}

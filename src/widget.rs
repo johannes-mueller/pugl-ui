@@ -21,6 +21,14 @@ pub trait Widget : DowncastSync {
 
     fn min_size(&self) -> Size { Default::default() }
 
+    fn sized_width(&self) -> bool {
+	self.min_size().w > 0.0
+    }
+
+    fn sized_height(&self) -> bool {
+	self.min_size().h > 0.0
+    }
+
     fn width_expandable (&self) -> bool { false }
     fn height_expandable (&self) -> bool { false }
 
