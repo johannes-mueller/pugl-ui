@@ -61,6 +61,17 @@ pub struct HorizontalLayouterImpl {
     d: StackLayoutData
 }
 
+impl HorizontalLayouterImpl {
+    pub fn set_spacing(&mut self, s: Spacing) -> &mut HorizontalLayouterImpl {
+	self.d.spacing = s;
+	self
+    }
+    pub fn set_padding(&mut self, s: Spacing) -> &mut HorizontalLayouterImpl {
+	self.d.padding = s;
+	self
+    }
+}
+
 impl Default for HorizontalLayouterImpl {
     fn default() -> HorizontalLayouterImpl {
 	HorizontalLayouterImpl {
@@ -148,6 +159,17 @@ pub struct VerticalLayouter;
 
 pub struct VerticalLayouterImpl {
     d: StackLayoutData
+}
+
+impl VerticalLayouterImpl {
+    pub fn set_spacing(&mut self, s: Spacing) -> &mut VerticalLayouterImpl {
+	self.d.spacing = s;
+	self
+    }
+    pub fn set_padding(&mut self, s: Spacing) -> &mut VerticalLayouterImpl {
+	self.d.padding = s;
+	self
+    }
 }
 
 impl Default for VerticalLayouterImpl {

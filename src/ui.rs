@@ -69,6 +69,12 @@ impl WidgetNode {
         }
     }
 
+    fn layouter_impl<T: Layouter>(&mut self) -> &mut T::Implementor {
+	self.layouter
+	    .as_deref_mut().expect("::pack(), no layouter found")
+	    .downcast_mut::<T::Implementor>().expect("downcast of layouter failed")
+    }
+
     fn pack<T: Layouter>(&mut self, widget: Id, mut parent: LayoutWidgetHandle<T>, target: T::Target) {
 	let subnode_id = match self.children.iter().position(|ref node| node.id == widget) {
             Some(id) => id,
@@ -76,12 +82,8 @@ impl WidgetNode {
                 return;
             }
         };
-	let layout_impl_0 = &mut self.layouter.as_deref_mut().expect("::pack(), no layouter found");
-	let layout_impl_1 = layout_impl_0.downcast_mut::<T::Implementor>();
 
-	let layout_impl_2 = layout_impl_1.expect("downcast of layouter failed");
-
-	parent.layouter().pack(layout_impl_2, subnode_id, target);
+	parent.layouter().pack(self.layouter_impl::<T>(), subnode_id, target);
     }
 
     pub(crate) fn apply_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>, orig_pos: Coord) {
@@ -166,6 +168,10 @@ impl UI {
     pub fn set_layouter<T: Layouter>(&mut self, id: Id) -> LayoutWidgetHandle<T> {
 	self.find_node(id).set_layouter(T::new_implementor());
 	LayoutWidgetHandle::<T>::new(id)
+    }
+
+    pub fn layouter_handle<T: Layouter>(&mut self, layouter: LayoutWidgetHandle<T>) -> &mut T::Implementor {
+	self.find_node(layouter.widget()).layouter_impl::<T>()
     }
 
     pub fn pack_to_layout<T: Layouter>(&mut self, widget: Id, parent: LayoutWidgetHandle<T>, target: T::Target) {

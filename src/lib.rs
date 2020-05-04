@@ -200,25 +200,35 @@ mod tests {
 
 	let layouter = ui.new_layouter::<HorizontalLayouter>();
 
+	ui.layouter_handle(ui.root_layout()).set_padding(0.).set_spacing(10.);
+	ui.layouter_handle(layouter).set_spacing(0.).set_padding(0.);
+
         let rw2 = ui.new_widget (RectWidgetFactory {
             color: (1., 0., 0.),
             size: Size { w: 128., h: 64. },
-            name: "red"
+            name: "ruĝa"
         });
+
+        let rw3 = ui.new_widget (RectWidgetFactory {
+            color: (0., 0., 1.),
+            size: Size { w: 128., h: 64. },
+            name: "blua"
+        });
+
 
         let rw4 = ui.new_widget (RectWidgetFactory {
             color: (0., 1., 1.),
-            size: Size { w: 512., h: 129. },
+            size: Size { w: 512., h: 128. },
             name: "Eĥoŝanĝo ĉiuĵaŭde"
         });
 
 
-        let sp1 = ui.new_widget (SpacerFactory {});
-
-        ui.pack_to_layout(sp1, layouter, StackDirection::Back);
+        //let sp1 = ui.new_widget (SpacerFactory {});
+        //ui.pack_to_layout(sp1, layouter, StackDirection::Back);
 
         ui.pack_to_layout(layouter.widget(), ui.root_layout(), StackDirection::Back);
         ui.pack_to_layout(rw2, layouter, StackDirection::Back);
+        ui.pack_to_layout(rw3, layouter, StackDirection::Back);
         ui.pack_to_layout(rw4, ui.root_layout(), StackDirection::Front);
         ui.do_layout();
 
