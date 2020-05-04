@@ -78,7 +78,8 @@ impl WidgetFactory<RootWidget> for RootWidgetFactory {
 fn main() {
     let mut ui = Box::new(UI::new( RootWidgetFactory {}));
 
-    let dial_layout = ui.new_layouter(HorizontalLayouter {});
+    let top_layout = ui.new_layouter::<HorizontalLayouter>();
+    let dial_layout = ui.new_layouter::<HorizontalLayouter>();
 
     let dial1 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
     let dial2 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
@@ -92,8 +93,12 @@ fn main() {
     ui.pack_to_layout(dial2, dial_layout, StackDirection::Front);
     ui.pack_to_layout(dial3, dial_layout, StackDirection::Front);
 
+    ui.pack_to_layout(top_layout.widget(), ui.root_layout(), StackDirection::Front);
     ui.pack_to_layout(dial_layout.widget(), ui.root_layout(), StackDirection::Front);
-    ui.pack_to_layout(reset_button, ui.root_layout(), StackDirection::Front);
+
+    ui.add_spacer(top_layout, StackDirection::Back);
+    ui.pack_to_layout(reset_button, top_layout, StackDirection::Back);
+    ui.add_spacer(top_layout, StackDirection::Back);
 
     ui.do_layout();
 

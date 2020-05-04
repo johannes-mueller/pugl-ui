@@ -135,12 +135,13 @@ mod tests {
         fn event (&mut self, ev: Event) -> Option<Event> {
             match ev.data {
                 EventType::MouseMove (_mm) => {
-                    println!("mouse move {} {}", ev.context.pos.x, ev.context.pos.y);
+                    println!("mouse move {} {} on {}", ev.context.pos.x, ev.context.pos.y, self.name);
                     event_processed!()
                 }
                 EventType::MouseButtonRelease (btn) => {
-                    println!("Button number {}", btn.num);
-                    self.clicked = true;
+		    if btn.num == 1 {
+			self.clicked = true;
+		    }
                     event_processed!()
                 },
                 EventType::KeyRelease (ke) => {
@@ -203,7 +204,9 @@ mod tests {
 
     impl RectWidget {
 	pub fn clicked(&mut self) -> bool {
-	    println!("RectWidget::clicked() {:?}", self.clicked);
+	    if self.clicked {
+		println!("RectWidget::clicked() {}", self.name);
+	    }
 	    let clicked = self.clicked;
 	    self.clicked = false;
 	    clicked
@@ -266,7 +269,7 @@ mod tests {
 	let light_gray = ui.new_widget (RectWidgetFactory {
             color: (0.8, 0.8, 0.8),
             size: Size { w: 128., h: 64. },
-	    width_expandable: true,
+	    width_expandable: false,
 	    height_expandable: false,
             name: "hela"
         });
@@ -274,8 +277,8 @@ mod tests {
 	let mid_gray = ui.new_widget (RectWidgetFactory {
             color: (0.6, 0.6, 0.6),
             size: Size { w: 128., h: 64. },
-	    width_expandable: true,
-	    height_expandable: true,
+	    width_expandable: false,
+	    height_expandable: false,
             name: "mezhela"
         });
 
@@ -290,7 +293,7 @@ mod tests {
 	let white = ui.new_widget (RectWidgetFactory {
             color: (1., 1., 1.),
             size: Size { w: 32., h: 32. },
-	    width_expandable: false,
+	    width_expandable: true,
 	    height_expandable: true,
             name: "b"
         });
@@ -311,10 +314,10 @@ mod tests {
 	let pink_orange_gray_lt = ui.new_layouter::<HorizontalLayouter>();
 	let gray_lt = ui.new_layouter::<VerticalLayouter>();
 
-	ui.layouter_handle(ui.root_layout()).set_padding(0.).set_spacing(10.);
+	ui.layouter_handle(ui.root_layout()).set_padding(0.).set_spacing(20.);
 	ui.layouter_handle(blue_red_lt).set_spacing(0.).set_padding(0.);
 	ui.layouter_handle(green_yellow_lt).set_spacing(10.0).set_padding(0.);
-
+	ui.layouter_handle(pink_orange_gray_lt).set_padding(0.0).set_spacing(15.0);
 
         ui.pack_to_layout(cyan, ui.root_layout(), StackDirection::Front);
 
@@ -350,7 +353,7 @@ mod tests {
 	while !(ui.close_request_issued() || ui.widget::<RootWidget>(0).wants_quit()) {
 	    ui.next_event(-1.0);
 
-	    if ui.widget::<RectWidget>(rw2).clicked() {
+	    if ui.widget::<RectWidget>(red).clicked() {
 		println!("Click received rwidget");
 	    }
 
