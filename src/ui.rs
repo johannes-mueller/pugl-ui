@@ -145,6 +145,7 @@ pub struct UI {
     view: PuglViewFFI,
     focused_widget: Id,
     close_request_issued: bool,
+    have_focus: bool
 }
 
 impl UI {
@@ -166,6 +167,7 @@ impl UI {
             focused_widget: 0,
             widgets: vec![root_widget],
             close_request_issued: false,
+	    have_focus: false
         }
     }
 
@@ -276,10 +278,14 @@ impl UI {
                 break;
             }
         }
-	println!("Focusing widget {}", fw);
+
         self.widgets[self.focused_widget].set_focus(false);
         self.focused_widget = fw;
         self.widgets[self.focused_widget].set_focus(true);
+    }
+
+    pub fn has_focus(&self) -> bool {
+	self.have_focus
     }
 
     pub fn next_event(&mut self, timeout: f64) {
@@ -363,6 +369,18 @@ impl PuglViewTrait for UI {
             }
         }
 
+	Status::Success
+    }
+
+    fn focus_in(&mut self) -> Status {
+	self.have_focus = true;
+	self.widgets[self.focused_widget].set_focus(true);
+	Status::Success
+    }
+
+    fn focus_out(&mut self) -> Status {
+	self.have_focus = false;
+	self.widgets[self.focused_widget].set_focus(false);
 	Status::Success
     }
 
