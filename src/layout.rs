@@ -91,6 +91,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
                 acc
             }
         });
+
         let width_avail = size_avail.w - self.d.spacing * (sized_widgets - 1) as f64  - 2.*self.d.padding;
         let height_avail = size_avail.h - 2.*self.d.padding;
         let (expanders, width_avail) = self.d.subnodes.iter().fold((0, width_avail), |(exp, wa), sn| {
@@ -101,8 +102,9 @@ impl LayouterImpl for HorizontalLayouterImpl {
 
         let mut pos = orig_pos + Coord { x: self.d.padding, y: self.d.padding };
         for sn in self.d.subnodes.iter() {
-            let wsize = {
+            let (width, min_width) = {
                 let widget = &mut widgets[children[*sn].id];
+
                 if widget.width_expandable() {
                     widget.expand_width(expand_each);
                 }
@@ -110,12 +112,15 @@ impl LayouterImpl for HorizontalLayouterImpl {
                     widget.set_height(height_avail);
                 }
                 widget.set_pos (&pos);
-                widget.size()
+                (widget.size().w, widget.min_size().w)
             };
             children[*sn].apply_sizes(widgets, pos);
-            if wsize.w > 0.0 {
-                pos += Coord { x: wsize.w + self.d.spacing, y: 0.0 };
+            if width > 0.0 {
+                pos += Coord { x: width, y: 0.0 };
             }
+	    if min_width > 0.0 {
+		pos += Coord { x: self.d.spacing, y: 0.0 };
+	    }
         }
     }
 
@@ -194,6 +199,7 @@ impl LayouterImpl for VerticalLayouterImpl {
                 acc
             }
         });
+
         let height_avail = size_avail.h - self.d.spacing * (sized_widgets - 1) as f64 - 2.*self.d.padding;
         let width_avail = size_avail.w - 2.*self.d.padding;
         let (expanders, height_avail) = self.d.subnodes.iter().fold((0, height_avail), |(exp, wa), sn| {
@@ -204,7 +210,7 @@ impl LayouterImpl for VerticalLayouterImpl {
 
         let mut pos = orig_pos + Coord { x: self.d.padding, y: self.d.padding };
         for sn in self.d.subnodes.iter() {
-            let wsize = {
+            let (height, min_height)  = {
                 let widget = &mut widgets[children[*sn].id];
                 if widget.height_expandable() {
                     widget.expand_height(expand_each);
@@ -213,12 +219,15 @@ impl LayouterImpl for VerticalLayouterImpl {
                     widget.set_width(width_avail);
                 }
                 widget.set_pos (&pos);
-                widget.size()
+                (widget.size().h, widget.min_size().h)
             };
             children[*sn].apply_sizes(widgets, pos);
-            if wsize.h > 0.0 {
-                pos += Coord { x: 0.0, y: wsize.h + self.d.spacing };
+            if height > 0.0 {
+                pos += Coord { x: 0.0, y: height };
             }
+	    if min_height > 0.0 {
+		pos += Coord { x: 0.0, y:  self.d.spacing };
+	    }
         }
 
     }
