@@ -39,7 +39,7 @@ struct StackLayoutData {
 impl Default for StackLayoutData {
     fn default() -> StackLayoutData {
 	StackLayoutData {
-	    padding: 10.0,
+	    padding: 0.0,
 	    spacing: 5.0,
 	    subnodes: VecDeque::new(),
 	}
