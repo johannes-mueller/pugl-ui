@@ -192,8 +192,9 @@ impl UI {
 	LayoutWidgetHandle::<T>::new(id)
     }
 
-    pub fn new_spacer(&mut self) -> Id {
-	self.new_widget(SpacerFactory {})
+    pub fn add_spacer<T: Layouter>(&mut self, parent: LayoutWidgetHandle<T>, target: T::Target) {
+	let sp = self.new_widget(SpacerFactory {});
+	self.pack_to_layout(sp, parent, target);
     }
 
     pub fn layouter_handle<T: Layouter>(&mut self, layouter: LayoutWidgetHandle<T>) -> &mut T::Implementor {

@@ -321,8 +321,7 @@ mod tests {
 	ui.pack_to_layout(green_yellow_lt.widget(), ui.root_layout(), StackDirection::Back);
         ui.pack_to_layout(blue_red_lt.widget(), ui.root_layout(), StackDirection::Back);
 	ui.pack_to_layout(red, blue_red_lt, StackDirection::Back);
-	let sp = ui.new_spacer();
-	ui.pack_to_layout(sp, blue_red_lt, StackDirection::Back);
+	ui.add_spacer(blue_red_lt, StackDirection::Back);
         ui.pack_to_layout(blue, blue_red_lt, StackDirection::Back);
 
 	ui.pack_to_layout(green, green_yellow_lt, StackDirection::Front);
@@ -331,8 +330,6 @@ mod tests {
 	ui.pack_to_layout(pink_orange_gray_lt.widget(), ui.root_layout(), StackDirection::Back);
 	ui.pack_to_layout(pink, pink_orange_gray_lt, StackDirection::Back);
 	ui.pack_to_layout(orange, pink_orange_gray_lt, StackDirection::Back);
-	//let sp = ui.new_spacer();
-	//ui.pack_to_layout(sp, pink_orange_gray_lt, StackDirection::Back);
 	ui.pack_to_layout(gray_lt.widget(), pink_orange_gray_lt, StackDirection::Back);
 	ui.pack_to_layout(white, pink_orange_gray_lt, StackDirection::Back);
 
