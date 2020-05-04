@@ -112,6 +112,28 @@ impl WidgetNode {
 
 	size
     }
+
+    fn detect_expandables(&self, widgets: &mut Vec<Box<dyn Widget>>) -> (bool, bool) {
+	if self.children.is_empty() {
+	    let wgt = &widgets[self.id];
+	    return (wgt.width_expandable(), wgt.height_expandable())
+	}
+
+	let mut width_exp = false;
+	let mut height_exp = false;
+
+	for c in self.children.iter() {
+	    let (we, he) = c.detect_expandables(widgets);
+	    width_exp = we || width_exp;
+	    height_exp = he || height_exp;
+	}
+
+	if self.id != 0 {
+	    let lw = &mut widgets[self.id].downcast_mut::<LayoutWidget>().expect("Downcast to LayoutWidget failed.");
+	    lw.set_expandable(width_exp, height_exp);
+	}
+	(width_exp, height_exp)
+    }
 }
 
 
@@ -180,12 +202,14 @@ impl UI {
 
     pub fn pack_to_layout<T: Layouter>(&mut self, widget: Id, parent: LayoutWidgetHandle<T>, target: T::Target) {
 
-	let new_node = self.unlayouted_nodes.remove(&widget).expect("widget already layouted?");
+	if let Some(sp) = self.widgets[widget].downcast_mut::<Spacer>() {
+	    sp.set_expandable(T::expandable());
+	}
 
+	let new_node = self.unlayouted_nodes.remove(&widget).expect("widget already layouted?");
         let node = self.find_node(parent.widget());
 
         node.children.push (new_node);
-
         node.pack(widget, parent, target);
     }
 
@@ -196,6 +220,7 @@ impl UI {
         let orig_size = self.widgets[0].size();
         let new_size = {
             let widgets = &mut self.widgets;
+	    self.root_widget.detect_expandables(widgets);
             self.root_widget.calc_widget_sizes(widgets);
             let size = widgets[0].size();
             let new_size = if (orig_size.w > size.w) || (orig_size.h > size.h) {

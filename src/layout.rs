@@ -20,6 +20,7 @@ pub trait Layouter : Default {
     type Implementor: LayouterImpl;
     fn new_implementor() -> Box<dyn LayouterImpl>;
     fn pack(&mut self, layout_impl: &mut Self::Implementor, subnode_id: Id, target: Self::Target);
+    fn expandable() -> (bool, bool);
 }
 
 type Spacing = f64;
@@ -151,6 +152,9 @@ impl Layouter for HorizontalLayouter {
     fn pack(&mut self, layout_impl: &mut Self::Implementor, subnode_id: Id, target: Self::Target) {
 	layout_impl.pack(subnode_id, target);
     }
+    fn expandable() -> (bool, bool) {
+	(true, false)
+    }
 }
 
 
@@ -252,6 +256,9 @@ impl Layouter for VerticalLayouter {
     fn pack(&mut self, layout_impl: &mut Self::Implementor, subnode_id: Id, target: Self::Target) {
 	layout_impl.pack(subnode_id, target);
     }
+    fn expandable() -> (bool, bool) {
+	(false, true)
+    }
 }
 
 
@@ -260,7 +267,16 @@ impl Layouter for VerticalLayouter {
 
 
 pub struct LayoutWidget {
-    stub: WidgetStub
+    stub: WidgetStub,
+    width_expandable: bool,
+    height_expandable: bool
+}
+
+impl LayoutWidget {
+    pub(crate) fn set_expandable(&mut self, we: bool, he: bool) {
+	self.width_expandable = we;
+	self.height_expandable = he;
+    }
 }
 
 impl Widget for LayoutWidget {
@@ -271,19 +287,25 @@ impl Widget for LayoutWidget {
         &mut self.stub
     }
 
-    fn width_expandable(&self) -> bool { true }
-    fn height_expandable(&self) -> bool { true }
+    fn width_expandable(&self) -> bool { self.width_expandable }
+    fn height_expandable(&self) -> bool { self.height_expandable }
 }
 
 pub struct LayoutWidgetFactory {}
 impl WidgetFactory<LayoutWidget> for LayoutWidgetFactory {
     fn make_widget(&self, stub: WidgetStub) -> LayoutWidget {
-        LayoutWidget { stub }
+        LayoutWidget {
+	    stub,
+	    width_expandable: false,
+	    height_expandable: false
+	}
     }
 }
 
 pub struct Spacer {
-    stub: WidgetStub
+    stub: WidgetStub,
+    width_expandable: bool,
+    height_expandable: bool
 }
 
 impl Widget for Spacer {
@@ -293,15 +315,25 @@ impl Widget for Spacer {
     fn stub_mut (&mut self) -> &mut WidgetStub {
         &mut self.stub
     }
+    fn width_expandable(&self) -> bool { self.width_expandable }
+    fn height_expandable(&self) -> bool { self.height_expandable }
+}
 
-    fn width_expandable(&self) -> bool { true }
-    fn height_expandable(&self) -> bool { true }
+impl Spacer {
+    pub(crate) fn set_expandable(&mut self, (we, he): (bool, bool)) {
+	self.width_expandable = we;
+	self.height_expandable = he;
+    }
 }
 
 pub struct SpacerFactory {}
 impl WidgetFactory<Spacer> for SpacerFactory {
     fn make_widget(&self, stub: WidgetStub) -> Spacer {
-        Spacer { stub }
+        Spacer {
+	    stub,
+	    width_expandable: false,
+	    height_expandable: false
+	}
     }
 }
 
@@ -321,5 +353,8 @@ impl<T: Layouter> LayoutWidgetHandle<T> {
     }
     pub fn layouter(&mut self) -> &mut T {
 	&mut self.layouter
+    }
+    pub fn expandable() -> (bool, bool) {
+	T::expandable()
     }
 }
