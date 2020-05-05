@@ -126,11 +126,8 @@ impl LayouterImpl for HorizontalLayouterImpl {
 
     fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
 	let mut need = Size::default();
-
-        need.w += 2.*self.d.padding;
-        need.h += 2.*self.d.padding;
-
-	for subnode in self.d.subnodes.iter() {
+        need.w += self.d.padding;
+        for subnode in self.d.subnodes.iter() {
 
             let size = children[*subnode].calc_widget_sizes(widgets);
             need.w += size.w;
@@ -139,7 +136,8 @@ impl LayouterImpl for HorizontalLayouterImpl {
             }
             need.w += self.d.spacing;
         }
-        need.w -= self.d.spacing;
+        need.w += self.d.padding - self.d.spacing;
+        need.h += 2.*self.d.padding;
 
 	need
     }
@@ -235,12 +233,8 @@ impl LayouterImpl for VerticalLayouterImpl {
     }
 
     fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
-
 	let mut need = Size::default();
-
-	need.h += 2.*self.d.padding;
-        need.w += 2.*self.d.padding;
-
+        need.h += self.d.padding;
         for subnode in self.d.subnodes.iter() {
 
             let size = children[*subnode].calc_widget_sizes(widgets);
@@ -250,7 +244,8 @@ impl LayouterImpl for VerticalLayouterImpl {
             }
             need.h += self.d.spacing
         }
-        need.h -= self.d.spacing;
+        need.w += 2.*self.d.padding;
+        need.h += self.d.padding - self.d.spacing;
 
 	need
     }
