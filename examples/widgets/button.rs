@@ -81,7 +81,7 @@ impl Widget for Button {
 }
 
 impl Button {
-    fn new (text: &str, stub: WidgetStub) -> Button {
+    pub fn new (text: &str) -> Box<Button> {
         let sf = cairo::ImageSurface::create (cairo::Format::ARgb32, 8, 8).unwrap();
         let cr = cairo::Context::new (&sf);
 
@@ -96,28 +96,17 @@ impl Button {
         let (w, h) = lyt.get_pixel_size();
         let min_size: Size = Size { w: w.into(), h: h.into() };
 
-        Button { stub, text: String::from(text), min_size, clicked: false }
+        Box::new(Button {
+	    stub: WidgetStub::default(),
+	    text: String::from(text),
+	    min_size,
+	    clicked: false
+	})
     }
 
     pub fn clicked(&mut self) -> bool {
 	let clicked = self.clicked;
 	self.clicked = false;
 	clicked
-    }
-}
-
-pub struct Factory {
-    text: &'static str
-}
-
-impl WidgetFactory<Button> for Factory {
-    fn make_widget(&self, stub: WidgetStub) -> Button {
-        Button::new (self.text, stub)
-    }
-}
-
-pub fn new(txt: &'static str) -> Factory {
-    Factory {
-        text: txt
     }
 }

@@ -279,7 +279,7 @@ impl Layouter for VerticalLayouter {
 
 
 
-
+#[derive(Default)]
 pub struct LayoutWidget {
     stub: WidgetStub,
     width_expandable: bool,
@@ -308,17 +308,7 @@ impl Widget for LayoutWidget {
     fn sized_height(&self) -> bool { true }
 }
 
-pub struct LayoutWidgetFactory {}
-impl WidgetFactory<LayoutWidget> for LayoutWidgetFactory {
-    fn make_widget(&self, stub: WidgetStub) -> LayoutWidget {
-        LayoutWidget {
-	    stub,
-	    width_expandable: false,
-	    height_expandable: false
-	}
-    }
-}
-
+#[derive(Default)]
 pub struct Spacer {
     stub: WidgetStub,
     width_expandable: bool,
@@ -342,18 +332,6 @@ impl Spacer {
 	self.height_expandable = he;
     }
 }
-
-pub struct SpacerFactory {}
-impl WidgetFactory<Spacer> for SpacerFactory {
-    fn make_widget(&self, stub: WidgetStub) -> Spacer {
-        Spacer {
-	    stub,
-	    width_expandable: false,
-	    height_expandable: false
-	}
-    }
-}
-
 
 pub struct LayoutWidgetHandle<L: Layouter, W: Widget> {
     widget_handle: WidgetHandle<W>,

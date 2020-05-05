@@ -7,6 +7,7 @@ extern crate pugl_sys;
 #[macro_use]
 extern crate downcast_rs;
 
+#[macro_use]
 pub mod widget;
 
 #[macro_use]
@@ -28,6 +29,7 @@ mod tests {
     use crate::widget::*;
     use cairo;
 
+    #[derive(Default)]
     struct RootWidget {
         stub: WidgetStub,
 	wants_quit: bool,
@@ -79,17 +81,7 @@ mod tests {
 	}
     }
 
-    struct RootWidgetFactory {}
-    impl WidgetFactory<RootWidget> for RootWidgetFactory {
-        fn make_widget(&self, stub: WidgetStub) -> RootWidget {
-            RootWidget {
-                stub,
-		wants_quit: false,
-		focus_next: false
-            }
-        }
-    }
-
+    #[derive(Default)]
     struct RectWidget {
         stub: WidgetStub,
         color: (f64, f64, f64),
@@ -218,30 +210,6 @@ mod tests {
         fn takes_focus(&self) -> bool { true }
     }
 
-
-    struct RectWidgetFactory {
-        color: (f64, f64, f64),
-        size: Size,
-	width_expandable: bool,
-	height_expandable: bool,
-        name: &'static str
-    }
-    impl WidgetFactory<RectWidget> for RectWidgetFactory {
-        fn make_widget(&self, stub: WidgetStub) -> RectWidget {
-            RectWidget {
-                stub: stub,
-                color: self.color,
-                min_size: self.size,
-		width_expandable: self.width_expandable,
-		height_expandable: self.height_expandable,
-                name: self.name,
-		clicked: false,
-		recently_clicked: false,
-		under_pointer: false
-            }
-        }
-    }
-
     impl RectWidget {
 	pub fn clicked(&mut self) -> bool {
 	    if self.clicked {
@@ -256,97 +224,107 @@ mod tests {
 
     #[test]
     fn view_tk() {
-        let mut ui = Box::new(UI::new(RootWidgetFactory {}));
+        let mut ui = Box::new(UI::new(Box::new(RootWidget::default())));
 
-        let red = ui.new_widget (RectWidgetFactory {
+        let red = ui.new_widget (Box::new(RectWidget {
             color: (1., 0., 0.),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: false,
 	    height_expandable: false,
-            name: "ruĝa"
-        });
+            name: "ruĝa",
+	    ..Default::default()
+        }));
 
-        let blue = ui.new_widget (RectWidgetFactory {
+        let blue = ui.new_widget (Box::new(RectWidget {
             color: (0., 0., 1.),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: false,
 	    height_expandable: false,
-            name: "blua"
-        });
+            name: "blua",
+	    ..Default::default()
+        }));
 
-	let green = ui.new_widget (RectWidgetFactory {
+	let green = ui.new_widget (Box::new(RectWidget {
             color: (0., 1., 0.),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: false,
 	    height_expandable: false,
-            name: "verda"
-        });
+            name: "verda",
+	    ..Default::default()
+        }));
 
-	let yellow = ui.new_widget (RectWidgetFactory {
+	let yellow = ui.new_widget (Box::new(RectWidget {
             color: (1., 1., 0.),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: true,
 	    height_expandable: false,
-            name: "flava"
-        });
+            name: "flava",
+	    ..Default::default()
+        }));
 
-	let pink = ui.new_widget (RectWidgetFactory {
+	let pink = ui.new_widget (Box::new(RectWidget {
             color: (1., 0., 1.),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: false,
 	    height_expandable: true,
-            name: "viola"
-        });
+            name: "viola",
+	    ..Default::default()
+        }));
 
-	let orange = ui.new_widget (RectWidgetFactory {
+	let orange = ui.new_widget (Box::new(RectWidget {
             color: (1., 0.5, 0.),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: true,
 	    height_expandable: false,
-            name: "oranĝa"
-        });
+            name: "oranĝa",
+	    ..Default::default()
+        }));
 
-	let light_gray = ui.new_widget (RectWidgetFactory {
+	let light_gray = ui.new_widget (Box::new(RectWidget {
             color: (0.8, 0.8, 0.8),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: false,
 	    height_expandable: false,
-            name: "hela"
-        });
+            name: "hela",
+	    ..Default::default()
+        }));
 
-	let mid_gray = ui.new_widget (RectWidgetFactory {
+	let mid_gray = ui.new_widget (Box::new(RectWidget {
             color: (0.6, 0.6, 0.6),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: false,
 	    height_expandable: false,
-            name: "mezhela"
-        });
+            name: "mezhela",
+	    ..Default::default()
+        }));
 
-	let dark_gray = ui.new_widget (RectWidgetFactory {
+	let dark_gray = ui.new_widget (Box::new(RectWidget {
             color: (0.4, 0.4, 0.4),
-            size: Size { w: 128., h: 64. },
+            min_size: Size { w: 128., h: 64. },
 	    width_expandable: false,
 	    height_expandable: false,
-            name: "malhela"
-        });
+            name: "malhela",
+	    ..Default::default()
+        }));
 
-	let white = ui.new_widget (RectWidgetFactory {
+	let white = ui.new_widget (Box::new(RectWidget {
             color: (1., 1., 1.),
-            size: Size { w: 32., h: 32. },
+            min_size: Size { w: 32., h: 32. },
 	    width_expandable: true,
 	    height_expandable: true,
-            name: "b"
-        });
+            name: "b",
+	    ..Default::default()
+        }));
 
 
-
-	let cyan = ui.new_widget (RectWidgetFactory {
+	let cyan = ui.new_widget (Box::new(RectWidget {
             color: (0., 1., 1.),
-            size: Size { w: 512., h: 128. },
+            min_size: Size { w: 512., h: 128. },
 	    width_expandable: false,
 	    height_expandable: false,
-            name: "Eĥoŝanĝo ĉiuĵaŭde"
-        });
+            name: "Eĥoŝanĝo ĉiuĵaŭde",
+	    ..Default::default()
+        }));
 
 
 	let blue_red_lt = ui.new_layouter::<HorizontalLayouter>();

@@ -113,7 +113,6 @@ pub trait Widget : DowncastSync {
     }
 
     fn reminder_handler(&mut self) { }
-
 }
 impl_downcast!(sync Widget);
 
@@ -131,6 +130,7 @@ pub struct Layout {
     pub size: Size
 }
 
+#[derive(Default)]
 pub struct WidgetStub {
     pub layout: Layout,
     has_focus: bool,
@@ -174,12 +174,12 @@ impl<W: Widget> Clone for WidgetHandle<W> {
 }
 
 impl<W: Widget> WidgetHandle<W> {
-    pub fn id(&self) -> Id { self.id }
-}
-
-pub trait WidgetFactory<W: Widget> {
-    fn make_widget (&self, stub: WidgetStub) -> W;
-    fn make_handle(&self, id: Id) -> WidgetHandle<W> {
-	WidgetHandle::<W> { id, widget_type: PhantomData }
+    pub(crate) fn new(id: Id) -> Self {
+	WidgetHandle::<W> {
+	    id: id,
+	    widget_type: PhantomData::<W>
+	}
     }
+
+    pub fn id(&self) -> Id { self.id }
 }

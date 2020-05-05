@@ -13,6 +13,7 @@ use pugl_ui::ui::*;
 
 use pugl_sys::*;
 
+#[derive(Default)]
 struct RootWidget {
     stub: WidgetStub,
     wants_quit: bool,
@@ -64,28 +65,17 @@ impl RootWidget {
     }
 }
 
-struct RootWidgetFactory {}
-impl WidgetFactory<RootWidget> for RootWidgetFactory {
-    fn make_widget(&self, stub: WidgetStub) -> RootWidget {
-        RootWidget {
-            stub,
-	    wants_quit: false,
-	    focus_next: false
-        }
-    }
-}
-
 fn main() {
-    let mut ui = Box::new(UI::new( RootWidgetFactory {}));
+    let mut ui = Box::new(UI::new(Box::new(RootWidget::default())));
 
     let top_layout = ui.new_layouter::<HorizontalLayouter>();
     let dial_layout = ui.new_layouter::<HorizontalLayouter>();
 
-    let dial1 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
-    let dial2 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
-    let dial3 = ui.new_widget(dial::new(0.0, 1.0, 0.1));
+    let dial1 = ui.new_widget(dial::Dial::new(0.0, 1.0, 0.1));
+    let dial2 = ui.new_widget(dial::Dial::new(0.0, 1.0, 0.1));
+    let dial3 = ui.new_widget(dial::Dial::new(0.0, 1.0, 0.1));
 
-    let reset_button = ui.new_widget(button::new("Reset"));
+    let reset_button = ui.new_widget(button::Button::new("Reset"));
 
     println!("starting layouts");
 

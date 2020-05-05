@@ -150,10 +150,8 @@ pub struct UI<RW: Widget + 'static> {
 }
 
 impl<RW: Widget + 'static> UI<RW> {
-    pub fn new<F: WidgetFactory<RW>>(factory: F) -> UI<RW> {
-        let stub = WidgetStub::new ();
-        let root_widget = Box::new(factory.make_widget(stub));
-	let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(factory.make_handle(0));
+    pub fn new(root_widget: Box<RW>) -> UI<RW> {
+	let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0));
         UI {
             view: ptr::null_mut(),
             root_widget: WidgetNode {
@@ -171,22 +169,17 @@ impl<RW: Widget + 'static> UI<RW> {
         }
     }
 
-    pub fn new_widget<W, F>(&mut self, factory: F) -> WidgetHandle<W>
-    where W: Widget + 'static,
-	  F: WidgetFactory<W> {
-        let id = self.widgets.len();
-
-        let stub = WidgetStub::new ();
-        self.widgets.push(Box::new(factory.make_widget(stub)));
-
+    pub fn new_widget<W: Widget>(&mut self, widget: Box<W>) -> WidgetHandle<W> {
+	let id = self.widgets.len();
+	self.widgets.push(widget);
 	self.unlayouted_nodes.insert(id, WidgetNode::new(id));
 
-	factory.make_handle(id)
+	WidgetHandle::<W>::new(id)
     }
 
     pub fn new_layouter<L>(&mut self) -> LayoutWidgetHandle<L, LayoutWidget>
     where L: Layouter {
-	let lw = self.new_widget(LayoutWidgetFactory {});
+	let lw = self.new_widget(Box::new(LayoutWidget::default()));
 	self.set_layouter::<L>(lw)
     }
 
@@ -198,7 +191,7 @@ impl<RW: Widget + 'static> UI<RW> {
 
     pub fn add_spacer<L>(&mut self, parent: LayoutWidgetHandle<L, LayoutWidget>, target: L::Target)
     where L: Layouter {
-	let sp = self.new_widget(SpacerFactory {});
+	let sp = self.new_widget(Box::new(Spacer::default()));
 	self.pack_to_layout(sp, parent, target);
     }
 
