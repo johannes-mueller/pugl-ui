@@ -115,13 +115,13 @@ fn main() {
     ui.show_window();
 
     println!("starting event looop");
-    while !(ui.close_request_issued() || ui.widget::<RootWidget>(0).wants_quit()) {
+    while !(ui.close_request_issued() || ui.root_widget().wants_quit()) {
 	ui.next_event(-1.0);
 
-	if ui.widget::<button::Button>(reset_button).clicked() {
-	    ui.widget::<dial::Dial>(dial1).set_value(0.0);
-	    ui.widget::<dial::Dial>(dial2).set_value(0.0);
-	    ui.widget::<dial::Dial>(dial3).set_value(0.0);
+	if ui.widget(reset_button).clicked() {
+	    ui.widget(dial1).set_value(0.0);
+	    ui.widget(dial2).set_value(0.0);
+	    ui.widget(dial3).set_value(0.0);
 	}
     }
 }

@@ -373,14 +373,14 @@ mod tests {
         ui.set_window_title("Test Pugl");
         ui.show_window();
 
-	while !(ui.close_request_issued() || ui.widget::<RootWidget>(0).wants_quit()) {
+	while !(ui.close_request_issued() || ui.root_widget().wants_quit()) {
 	    ui.next_event(-1.0);
 
-	    if ui.widget::<RectWidget>(red).clicked() {
+	    if ui.widget(red).clicked() {
 		println!("Click received rwidget");
 	    }
 
-	    if ui.widget::<RootWidget>(0).focus_next() {
+	    if ui.root_widget().focus_next() {
 		ui.focus_next_widget();
 	    }
 	}

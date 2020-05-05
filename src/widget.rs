@@ -1,4 +1,5 @@
 
+use std::marker::PhantomData;
 use downcast_rs::DowncastSync;
 
 use pugl_sys::pugl::*;
@@ -113,10 +114,6 @@ pub enum Request2UI {
     FocusNextWidget
 }
 
-pub trait WidgetFactory<T: Widget> {
-    fn make_widget (&self, stub: WidgetStub) -> T;
-}
-
 #[derive(Copy, Clone, Default)]
 pub struct Layout {
     pub pos: Coord,
@@ -144,5 +141,32 @@ impl WidgetStub {
 	let nrp = self.needs_repaint;
 	self.needs_repaint = false;
 	nrp
+    }
+}
+
+pub struct WidgetHandle<W: Widget> {
+    id: Id,
+    widget_type: PhantomData<W>
+}
+
+impl<W: Widget> Copy for WidgetHandle<W> { }
+
+impl<W: Widget> Clone for WidgetHandle<W> {
+    fn clone(&self) -> WidgetHandle<W> {
+	WidgetHandle::<W> {
+	    id: self.id,
+	    widget_type: PhantomData::<W>
+	}
+    }
+}
+
+impl<W: Widget> WidgetHandle<W> {
+    pub fn id(&self) -> Id { self.id }
+}
+
+pub trait WidgetFactory<W: Widget> {
+    fn make_widget (&self, stub: WidgetStub) -> W;
+    fn make_handle(&self, id: Id) -> WidgetHandle<W> {
+	WidgetHandle::<W> { id, widget_type: PhantomData }
     }
 }

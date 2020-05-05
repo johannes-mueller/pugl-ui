@@ -15,7 +15,7 @@ pub trait LayouterImpl: DowncastSync {
 }
 impl_downcast!(sync LayouterImpl);
 
-pub trait Layouter : Default {
+pub trait Layouter : Default + Clone + Copy {
     type Target;
     type Implementor: LayouterImpl;
     fn new_implementor() -> Box<dyn LayouterImpl>;
@@ -355,23 +355,33 @@ impl WidgetFactory<Spacer> for SpacerFactory {
 }
 
 
-#[derive(Clone, Copy)]
-pub struct LayoutWidgetHandle<T: Layouter> {
-    id: Id,
-    layouter: T
+pub struct LayoutWidgetHandle<L: Layouter, W: Widget> {
+    widget_handle: WidgetHandle<W>,
+    layouter: L
 }
 
-impl<T: Layouter> LayoutWidgetHandle<T> {
-    pub fn new(id: Id) -> LayoutWidgetHandle<T> {
-	LayoutWidgetHandle { id, layouter: T::default() }
+impl<L: Layouter, W: Widget> Clone for LayoutWidgetHandle<L, W> {
+    fn clone(&self) -> Self {
+	LayoutWidgetHandle::<L, W> {
+	    widget_handle: self.widget_handle.clone(),
+	    layouter: L::default()
+	}
     }
-    pub fn widget(&self) -> Id {
-	self.id
+}
+
+impl<L: Layouter, W: Widget> Copy for LayoutWidgetHandle<L, W> { }
+
+impl<L: Layouter, W: Widget> LayoutWidgetHandle<L, W> {
+    pub fn new(widget_handle: WidgetHandle<W>) -> LayoutWidgetHandle<L, W> {
+	LayoutWidgetHandle { widget_handle, layouter: L::default() }
     }
-    pub fn layouter(&mut self) -> &mut T {
+    pub fn widget(&self) -> WidgetHandle<W> {
+	self.widget_handle
+    }
+    pub fn layouter(&mut self) -> &mut L {
 	&mut self.layouter
     }
     pub fn expandable() -> (bool, bool) {
-	T::expandable()
+	L::expandable()
     }
 }

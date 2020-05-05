@@ -69,13 +69,13 @@ impl WidgetNode {
         }
     }
 
-    fn layouter_impl<T: Layouter>(&mut self) -> &mut T::Implementor {
+    fn layouter_impl<L: Layouter>(&mut self) -> &mut L::Implementor {
 	self.layouter
 	    .as_deref_mut().expect("::pack(), no layouter found")
-	    .downcast_mut::<T::Implementor>().expect("downcast of layouter failed")
+	    .downcast_mut::<L::Implementor>().expect("downcast of layouter failed")
     }
 
-    fn pack<T: Layouter>(&mut self, widget: Id, mut parent: LayoutWidgetHandle<T>, target: T::Target) {
+    fn pack<L: Layouter, W: Widget>(&mut self, widget: Id, mut parent: LayoutWidgetHandle<L, W>, target: L::Target) {
 	let subnode_id = match self.children.iter().position(|ref node| node.id == widget) {
             Some(id) => id,
             None => {
@@ -83,7 +83,7 @@ impl WidgetNode {
             }
         };
 
-	parent.layouter().pack(self.layouter_impl::<T>(), subnode_id, target);
+	parent.layouter().pack(self.layouter_impl::<L>(), subnode_id, target);
     }
 
     pub(crate) fn apply_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>, orig_pos: Coord) {
@@ -137,11 +137,11 @@ impl WidgetNode {
 }
 
 
-pub struct UI {
+pub struct UI<RW: Widget + 'static> {
     widgets: Vec<Box<dyn Widget>>,
     root_widget: WidgetNode,
     unlayouted_nodes: HashMap<Id, WidgetNode>,
-    root_widget_handle: LayoutWidgetHandle<VerticalLayouter>,
+    root_widget_handle: LayoutWidgetHandle<VerticalLayouter, RW>,
     view: PuglViewFFI,
     focused_widget: Id,
     widget_under_pointer: Id,
@@ -149,13 +149,11 @@ pub struct UI {
     close_request_issued: bool
 }
 
-impl UI {
-    pub fn new<T, F> (factory: F) -> UI
-    where T: Widget + 'static,
-	  F: WidgetFactory<T> {
+impl<RW: Widget + 'static> UI<RW> {
+    pub fn new<F: WidgetFactory<RW>>(factory: F) -> UI<RW> {
         let stub = WidgetStub::new ();
         let root_widget = Box::new(factory.make_widget(stub));
-	let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter>::new(0);
+	let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(factory.make_handle(0));
         UI {
             view: ptr::null_mut(),
             root_widget: WidgetNode {
@@ -173,9 +171,9 @@ impl UI {
         }
     }
 
-    pub fn new_widget<T, F>(&mut self, factory: F) -> Id
-    where T: Widget + 'static,
-	  F: WidgetFactory<T> {
+    pub fn new_widget<W, F>(&mut self, factory: F) -> WidgetHandle<W>
+    where W: Widget + 'static,
+	  F: WidgetFactory<W> {
         let id = self.widgets.len();
 
         let stub = WidgetStub::new ();
@@ -183,39 +181,47 @@ impl UI {
 
 	self.unlayouted_nodes.insert(id, WidgetNode::new(id));
 
-	id
+	factory.make_handle(id)
     }
 
-    pub fn new_layouter<T: Layouter>(&mut self) -> LayoutWidgetHandle<T> {
+    pub fn new_layouter<L>(&mut self) -> LayoutWidgetHandle<L, LayoutWidget>
+    where L: Layouter {
 	let lw = self.new_widget(LayoutWidgetFactory {});
-	self.set_layouter::<T>(lw)
+	self.set_layouter::<L>(lw)
     }
 
-    pub fn set_layouter<T: Layouter>(&mut self, id: Id) -> LayoutWidgetHandle<T> {
-	self.find_node(id).set_layouter(T::new_implementor());
-	LayoutWidgetHandle::<T>::new(id)
+    pub fn set_layouter<L>(&mut self, lw: WidgetHandle<LayoutWidget>) -> LayoutWidgetHandle<L, LayoutWidget>
+    where L: Layouter {
+	self.find_node(lw.id()).set_layouter(L::new_implementor());
+	LayoutWidgetHandle::<L, LayoutWidget>::new(lw)
     }
 
-    pub fn add_spacer<T: Layouter>(&mut self, parent: LayoutWidgetHandle<T>, target: T::Target) {
+    pub fn add_spacer<L>(&mut self, parent: LayoutWidgetHandle<L, LayoutWidget>, target: L::Target)
+    where L: Layouter {
 	let sp = self.new_widget(SpacerFactory {});
 	self.pack_to_layout(sp, parent, target);
     }
 
-    pub fn layouter_handle<T: Layouter>(&mut self, layouter: LayoutWidgetHandle<T>) -> &mut T::Implementor {
-	self.find_node(layouter.widget()).layouter_impl::<T>()
+    pub fn layouter_handle<L, W>(&mut self, layouter: LayoutWidgetHandle<L, W>) -> &mut L::Implementor
+    where L: Layouter, W: Widget {
+	self.find_node(layouter.widget().id()).layouter_impl::<L>()
     }
 
-    pub fn pack_to_layout<T: Layouter>(&mut self, widget: Id, parent: LayoutWidgetHandle<T>, target: T::Target) {
+    pub fn pack_to_layout<L, W, PW>(&mut self, widget: WidgetHandle<W>, parent: LayoutWidgetHandle<L, PW>, target: L::Target)
+    where L: Layouter,
+	  W: Widget,
+	  PW: Widget {
 
-	if let Some(sp) = self.widgets[widget].downcast_mut::<Spacer>() {
-	    sp.set_expandable(T::expandable());
+	let id = widget.id();
+	if let Some(sp) = self.widgets[id].downcast_mut::<Spacer>() {
+	    sp.set_expandable(L::expandable());
 	}
 
-	let new_node = self.unlayouted_nodes.remove(&widget).expect("widget already layouted?");
-        let node = self.find_node(parent.widget());
+	let new_node = self.unlayouted_nodes.remove(&id).expect("widget already layouted?");
+        let node = self.find_node(parent.widget().id());
 
         node.children.push (new_node);
-        node.pack(widget, parent, target);
+        node.pack(id, parent, target);
     }
 
     pub fn do_layout(&mut self) {
@@ -260,13 +266,16 @@ impl UI {
 	self.close_request_issued
     }
 
-    pub fn root_layout(&self) -> LayoutWidgetHandle<VerticalLayouter> {
+    pub fn root_layout(&self) -> LayoutWidgetHandle<VerticalLayouter, RW> {
 	self.root_widget_handle
     }
 
-    pub fn widget<T>(&mut self, id: Id) -> &mut T
-    where T: Widget {
-	self.widgets[id].downcast_mut::<T>().expect("Widget cast failed!")
+    pub fn root_widget(&mut self) -> &mut RW {
+	self.widgets[0].downcast_mut::<RW>().expect("Root Widget cast failed")
+    }
+
+    pub fn widget<W: Widget>(&mut self, widget: WidgetHandle<W>) -> &mut W {
+	self.widgets[widget.id()].downcast_mut::<W>().expect("Widget cast failed!")
     }
 
     pub fn focus_next_widget (&mut self) {
@@ -331,7 +340,7 @@ impl UI {
 
 
 
-impl PuglViewTrait for UI {
+impl<RW: Widget> PuglViewTrait for UI<RW> {
     fn exposed (&mut self, expose: &ExposeArea, cr: &cairo::Context) {
         self.pass_exposed(&self.root_widget, expose, cr);
     }
