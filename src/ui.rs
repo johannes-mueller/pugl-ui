@@ -376,6 +376,9 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
             evop = match evop {
                 Some(ev) => {
                     let ev = self.widgets[id].event(ev);
+		    if let Some(timeout) = self.widgets[id].reminder_request() {
+			self.start_timer(id, timeout);
+		    }
                     ev
                 },
                 None => break
@@ -404,6 +407,11 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
 
     fn close_request (&mut self) {
         self.close_request_issued = true;
+    }
+
+    fn timer_event(&mut self, id: usize) -> Status {
+	self.widgets[id].reminder_handler();
+	Status::Success
     }
 
     fn set_view (&mut self, v: PuglViewFFI) {

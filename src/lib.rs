@@ -101,6 +101,8 @@ mod tests {
 
 	under_pointer: bool,
 
+	recently_clicked: bool,
+
 	clicked: bool
     }
 
@@ -130,6 +132,11 @@ mod tests {
 
             cr.show_text (self.name);
 
+	    if self.recently_clicked {
+		cr.rectangle(0., -extents.height, extents.width, extents.height);
+		cr.stroke();
+	    }
+
             cr.restore();
 
             if self.has_focus() {
@@ -147,7 +154,11 @@ mod tests {
                 EventType::MouseButtonRelease (btn) => {
 		    if btn.num == 1 {
 			self.clicked = true;
+			self.recently_clicked = true;
+			self.request_reminder(2.0);
+			self.ask_for_repaint();
 		    }
+
                     event_processed!()
                 },
                 EventType::KeyRelease (ke) => {
@@ -180,6 +191,11 @@ mod tests {
 		self.under_pointer = false;
 		self.ask_for_repaint()
 	    }
+	}
+
+	fn reminder_handler(&mut self) {
+	    self.recently_clicked = false;
+	    self.ask_for_repaint();
 	}
 
         fn min_size(&self) -> Size { self.min_size }
@@ -220,6 +236,7 @@ mod tests {
 		height_expandable: self.height_expandable,
                 name: self.name,
 		clicked: false,
+		recently_clicked: false,
 		under_pointer: false
             }
         }

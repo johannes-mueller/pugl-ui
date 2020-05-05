@@ -103,6 +103,17 @@ pub trait Widget : DowncastSync {
     fn has_focus (&self) -> bool {
         self.stub().has_focus
     }
+
+    fn request_reminder(&mut self, timeout: f64) {
+	self.stub_mut().reminder_request = Some(timeout);
+    }
+
+    fn reminder_request(&mut self) -> Option<f64> {
+	self.stub_mut().reminder_request.take()
+    }
+
+    fn reminder_handler(&mut self) { }
+
 }
 impl_downcast!(sync Widget);
 
@@ -123,7 +134,8 @@ pub struct Layout {
 pub struct WidgetStub {
     pub layout: Layout,
     has_focus: bool,
-    needs_repaint: bool
+    needs_repaint: bool,
+    reminder_request: Option<f64>
 }
 
 impl WidgetStub {
@@ -131,7 +143,8 @@ impl WidgetStub {
         WidgetStub {
             has_focus: false,
             layout: Default::default(),
-	    needs_repaint: true
+	    needs_repaint: true,
+	    reminder_request: None
         }
     }
 }
