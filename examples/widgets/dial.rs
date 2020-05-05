@@ -32,6 +32,8 @@ impl Dial {
 }
 
 impl Widget for Dial {
+    widget_stub!();
+
     fn exposed (&self, _exposed: &ExposeArea, cr: &cairo::Context) {
 
 	let pos = self.pos() + Coord { x: self.radius, y: self.radius };
@@ -107,11 +109,5 @@ impl Widget for Dial {
 
     fn min_size(&self) -> Size {
 	Size { w: 4. * self.radius, h: 4. * self.radius }
-    }
-    fn stub (&self) -> &WidgetStub {
-        &self.stub
-    }
-    fn stub_mut (&mut self) -> &mut WidgetStub {
-        &mut self.stub
     }
 }

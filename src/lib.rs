@@ -36,19 +36,14 @@ mod tests {
 	focus_next: bool
     }
 
-    impl Widget for RootWidget {
+    impl Widget
+	for RootWidget {
+	widget_stub!();
         fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
             cr.set_source_rgb (0.2, 0.2, 0.2);
             let size = self.size();
             cr.rectangle (0., 0., size.w, size.h);
             cr.fill ();
-        }
-        fn min_size(&self) -> Size { Size { w: 0., h: 0. } }
-        fn stub (&self) -> &WidgetStub {
-            &self.stub
-        }
-        fn stub_mut (&mut self) -> &mut WidgetStub {
-            &mut self.stub
         }
         fn event(&mut self, ev: Event) -> Option<Event> {
             ev.try_keypress()
@@ -99,6 +94,7 @@ mod tests {
     }
 
     impl Widget for RectWidget {
+	widget_stub!();
         fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
             let (r, g, b) = self.color;
             let size = self.size();
@@ -199,13 +195,6 @@ mod tests {
 	fn height_expandable(&self) -> bool {
 	    self.height_expandable
 	}
-
-        fn stub (&self) -> &WidgetStub {
-            &self.stub
-        }
-        fn stub_mut (&mut self) -> &mut WidgetStub {
-            &mut self.stub
-        }
 
         fn takes_focus(&self) -> bool { true }
     }

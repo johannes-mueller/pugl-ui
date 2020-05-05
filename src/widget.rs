@@ -183,3 +183,15 @@ impl<W: Widget> WidgetHandle<W> {
 
     pub fn id(&self) -> Id { self.id }
 }
+
+#[macro_export]
+macro_rules! widget_stub {
+    () => {
+	fn stub (&self) -> &$crate::widget::WidgetStub {
+            &self.stub
+	}
+	fn stub_mut (&mut self) -> &mut $crate::widget::WidgetStub {
+            &mut self.stub
+	}
+    }
+}

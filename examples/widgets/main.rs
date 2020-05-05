@@ -17,23 +17,18 @@ use pugl_sys::*;
 struct RootWidget {
     stub: WidgetStub,
     wants_quit: bool,
-    focus_next: bool
 }
 
 impl Widget for RootWidget {
+    widget_stub!();
+
     fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
         cr.set_source_rgb (0., 1., 0.);
         let size = self.size();
         cr.rectangle (0., 0., size.w, size.h);
         cr.fill ();
     }
-    fn min_size(&self) -> Size { Size { w: 0., h: 0. } }
-    fn stub (&self) -> &WidgetStub {
-        &self.stub
-    }
-    fn stub_mut (&mut self) -> &mut WidgetStub {
-        &mut self.stub
-    }
+
     fn event(&mut self, ev: Event) -> Option<Event> {
         ev.try_keypress()
             .and_then(|kp| kp.try_char())
@@ -41,10 +36,6 @@ impl Widget for RootWidget {
                 match c {
                     'q' => {
                         self.wants_quit = true;
-                        event_processed!()
-                    },
-                    '\t' => {
-                        self.focus_next = true;
                         event_processed!()
                     },
                     _ => event_not_processed!()
@@ -57,11 +48,6 @@ impl Widget for RootWidget {
 impl RootWidget {
     pub fn wants_quit(&self) -> bool {
 	self.wants_quit
-    }
-    pub fn focus_next(&mut self) -> bool {
-	let f = self.focus_next;
-	self.focus_next = false;
-	f
     }
 }
 
