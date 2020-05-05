@@ -330,13 +330,6 @@ impl UI {
 }
 
 
-pub trait UITrait {
-    fn ui(&self) -> &UI;
-    fn ui_mut(&mut self) -> &mut UI;
-
-    fn run(&mut self);
-}
-
 
 impl PuglViewTrait for UI {
     fn exposed (&mut self, expose: &ExposeArea, cr: &cairo::Context) {
@@ -409,11 +402,5 @@ impl PuglViewTrait for UI {
     }
     fn view (&self) -> PuglViewFFI {
         self.view
-    }
-}
-
-impl Drop for UI {
-    fn drop(&mut self) {
-	eprintln!("Dropping UI");
     }
 }
