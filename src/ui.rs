@@ -359,8 +359,8 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
 
 	if let Some(id) = event_path.back() {
 	    if self.widget_under_pointer != *id {
-		self.widgets[self.widget_under_pointer].pointer_leave();
-		self.widgets[*id].pointer_enter();
+		self.widgets[self.widget_under_pointer].pointer_leave_wrap();
+		self.widgets[*id].pointer_enter_wrap();
 		self.widget_under_pointer = *id;
 	    }
 	}

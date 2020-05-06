@@ -74,6 +74,10 @@ pub trait Widget : DowncastSync {
 	self.stub().sensitive
     }
 
+    fn is_hovered(&self) -> bool {
+	self.stub().hovered
+    }
+
     fn is_hit_by (&self, pos: Coord) -> bool {
         let layout = self.stub().layout;
 
@@ -94,7 +98,19 @@ pub trait Widget : DowncastSync {
 
     fn pointer_enter(&mut self) {}
 
+    fn pointer_enter_wrap(&mut self) {
+	self.stub_mut().hovered = true;
+	self.ask_for_repaint();
+	self.pointer_enter();
+    }
+
     fn pointer_leave(&mut self) {}
+
+    fn pointer_leave_wrap(&mut self) {
+	self.stub_mut().hovered = false;
+	self.ask_for_repaint();
+	self.pointer_leave();
+    }
 
     fn needs_repaint(&mut self) -> bool {
 	self.stub_mut().needs_repaint()
@@ -139,6 +155,7 @@ pub struct WidgetStub {
     has_focus: bool,
     needs_repaint: bool,
     sensitive: bool,
+    hovered: bool,
     reminder_request: Option<f64>
 }
 
@@ -149,6 +166,7 @@ impl Default for WidgetStub {
 	    has_focus: false,
 	    needs_repaint: false,
 	    sensitive: true,
+	    hovered: false,
 	    reminder_request: None
 	}
     }

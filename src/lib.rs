@@ -86,8 +86,6 @@ mod tests {
 	width_expandable: bool,
 	height_expandable: bool,
 
-	under_pointer: bool,
-
 	recently_clicked: bool,
 
 	clicked: bool
@@ -104,7 +102,7 @@ mod tests {
             cr.rectangle (pos.x, pos.y, size.w, size.h);
             cr.fill ();
 
-	    if self.under_pointer {
+	    if self.is_hovered() {
 		cr.set_source_rgb(0.5, 0., 0.);
 	    } else {
 		cr.set_source_rgb (0., 0., 0.);
@@ -164,22 +162,6 @@ mod tests {
                 _ => event_not_processed!()
             }.and_then (|es| es.pass_event (ev))
         }
-
-	fn pointer_enter(&mut self) {
-	    println!("::pointer_enter() {}", self.name);
-	    if !self.under_pointer {
-		self.under_pointer = true;
-		self.ask_for_repaint()
-	    }
-	}
-
-	fn pointer_leave(&mut self) {
-	    println!("::pointer_leave() {}", self.name);
-	    if self.under_pointer {
-		self.under_pointer = false;
-		self.ask_for_repaint()
-	    }
-	}
 
 	fn reminder_handler(&mut self) {
 	    self.recently_clicked = false;
