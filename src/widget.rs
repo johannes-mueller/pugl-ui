@@ -70,6 +70,10 @@ pub trait Widget : DowncastSync {
         false
     }
 
+    fn is_sensitive(&self) -> bool {
+	self.stub().sensitive
+    }
+
     fn is_hit_by (&self, pos: Coord) -> bool {
         let layout = self.stub().layout;
 
@@ -130,22 +134,23 @@ pub struct Layout {
     pub size: Size
 }
 
-#[derive(Default)]
 pub struct WidgetStub {
     pub layout: Layout,
     has_focus: bool,
     needs_repaint: bool,
+    sensitive: bool,
     reminder_request: Option<f64>
 }
 
-impl WidgetStub {
-    pub fn new() -> WidgetStub {
-        WidgetStub {
-            has_focus: false,
-            layout: Default::default(),
-	    needs_repaint: true,
+impl Default for WidgetStub {
+    fn default() -> WidgetStub {
+	WidgetStub {
+	    layout: Layout::default(),
+	    has_focus: false,
+	    needs_repaint: false,
+	    sensitive: true,
 	    reminder_request: None
-        }
+	}
     }
 }
 
