@@ -145,6 +145,7 @@ pub struct UI<RW: Widget + 'static> {
     view: PuglViewFFI,
     focused_widget: Id,
     widget_under_pointer: Id,
+    drag_ongoing: bool,
     have_focus: bool,
     close_request_issued: bool
 }
@@ -163,6 +164,7 @@ impl<RW: Widget + 'static> UI<RW> {
 	    root_widget_handle,
             focused_widget: 0,
             widgets: vec![root_widget],
+            drag_ongoing: false,
 	    have_focus: false,
 	    widget_under_pointer: 0,
             close_request_issued: false
@@ -346,12 +348,44 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
         let ev = match ev.data {
             EventType::KeyPress (_) |
             EventType::KeyRelease (_) => {
+                if self.drag_ongoing {
+                    self.widgets[self.widget_under_pointer].event(ev);
+                    return Status::Success
+                }
                 match self.widgets[self.focused_widget].event(ev) {
                     Some(ev) => ev,
                     None => return Status::Success
                 }
-            },
-            _ => ev
+            }
+            EventType::MouseButtonPress(btn) => {
+                if btn.num == 1 {
+                    self.drag_ongoing = true;
+                }
+                ev
+            }
+            EventType::MouseButtonRelease(btn) => {
+                if btn.num == 1 && self.drag_ongoing {
+                    self.drag_ongoing = false;
+                    let wgt = &mut self.widgets[self.widget_under_pointer];
+                    let pev = wgt.event(ev);
+                    if !wgt.is_hit_by(ev.pos()) {
+                        wgt.pointer_leave_wrap();
+                    }
+                    match pev {
+                        Some(ev) => ev,
+                        None => return Status::Success
+                    }
+                } else {
+                    ev
+                }
+            }
+            _ => {
+                if self.drag_ongoing {
+                    self.widgets[self.widget_under_pointer].event(ev);
+                    return Status::Success;
+                }
+                ev
+            }
         };
 
         let mut event_path = self.event_path(&self.root_widget, ev.context.pos, VecDeque::new());

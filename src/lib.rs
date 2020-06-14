@@ -86,6 +86,8 @@ mod tests {
 	width_expandable: bool,
 	height_expandable: bool,
 
+        drag_ongoing: bool,
+
 	recently_clicked: bool,
 
 	clicked: bool
@@ -134,11 +136,23 @@ mod tests {
         fn event (&mut self, ev: Event) -> Option<Event> {
             match ev.data {
                 EventType::MouseMove (_mm) => {
-                    // println!("mouse move {} {} on {}", ev.context.pos.x, ev.context.pos.y, self.name);
+                    if self.drag_ongoing {
+                        println!("drag to {}:{} {}", ev.context.pos.x, ev.context.pos.y, self.name);
+                    }
+                    event_processed!()
+                }
+                EventType::MouseButtonPress(btn) => {
+                    if btn.num == 1 {
+                        self.drag_ongoing = true;
+                    }
                     event_processed!()
                 }
                 EventType::MouseButtonRelease (btn) => {
 		    if btn.num == 1 {
+                        if self.drag_ongoing {
+                            println!("drag finished {}", self.name);
+                        }
+                        self.drag_ongoing = false;
 			self.clicked = true;
 			self.recently_clicked = true;
 			self.request_reminder(2.0);
@@ -179,6 +193,10 @@ mod tests {
 	}
 
         fn takes_focus(&self) -> bool { true }
+
+        fn pointer_leave(&mut self) {
+            println!("pointer leave {}", self.name);
+        }
     }
 
     impl RectWidget {
