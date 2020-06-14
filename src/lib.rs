@@ -16,9 +16,9 @@ pub mod layout;
 
 
 #[macro_export]
-macro_rules! event_processed { () => (Some(EventState::Processed)) }
+macro_rules! event_processed { () => (Some($crate::ui::EventState::Processed)) }
 #[macro_export]
-macro_rules! event_not_processed { () => (Some(EventState::NotProcessed)) }
+macro_rules! event_not_processed { () => (Some($crate::ui::EventState::NotProcessed)) }
 
 
 #[cfg(test)]
