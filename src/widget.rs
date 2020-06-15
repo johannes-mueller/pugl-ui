@@ -94,7 +94,7 @@ pub trait Widget : DowncastSync {
     fn stub_mut (&mut self) -> &mut WidgetStub;
 
     fn ask_for_repaint(&mut self)  {
-	self.stub_mut().needs_repaint = true;
+        self.stub_mut().needs_repaint = true;
     }
 
     /// The widget can request a reminder after `timeout`
@@ -103,7 +103,7 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually not to be reimplemented.
     fn request_reminder(&mut self, timeout: f64) {
-	self.stub_mut().reminder_request = Some(timeout);
+        self.stub_mut().reminder_request = Some(timeout);
     }
 
     /// Hands the reminder request over to the UI
@@ -111,7 +111,7 @@ pub trait Widget : DowncastSync {
     /// Only to be called by the UI as it consumes the reminder request.
     /// Usually not to be reimplemented.
     fn reminder_request(&mut self) -> Option<f64> {
-	self.stub_mut().reminder_request.take()
+        self.stub_mut().reminder_request.take()
     }
 
     /// Returns true iff the widget is currently focused.
@@ -133,14 +133,14 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually not to be reimplemented.
     fn sized_width(&self) -> bool {
-	self.min_size().w > 0.0
+        self.min_size().w > 0.0
     }
 
     /// Returns true iff the widget has a defined minimum height
     ///
     /// Usually not to be reimplemented.
     fn sized_height(&self) -> bool {
-	self.min_size().h > 0.0
+        self.min_size().h > 0.0
     }
 
     /// Sets the actual width of the widget to `width`.
@@ -218,14 +218,14 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually not to be reimplemented.
     fn is_sensitive(&self) -> bool {
-	self.stub().sensitive
+        self.stub().sensitive
     }
 
     /// Returns true iff the widget is currently hovered.
     ///
     /// Usually not to be reimplemented.
     fn is_hovered(&self) -> bool {
-	self.stub().hovered
+        self.stub().hovered
     }
 
     /// Returns true iff the widget's Layout is containing `pos`.
@@ -248,7 +248,7 @@ pub trait Widget : DowncastSync {
         let hf = self.stub().has_focus;
         self.stub_mut().has_focus = yn;
         if hf != yn {
-	    self.stub_mut().needs_repaint = true;
+            self.stub_mut().needs_repaint = true;
         }
     }
 
@@ -256,7 +256,7 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually not to be reimplemented.
     fn needs_repaint(&mut self) -> bool {
-	self.stub_mut().needs_repaint()
+        self.stub_mut().needs_repaint()
     }
 
     /// Wrapper for the `pointer_enter()` event function.
@@ -264,9 +264,9 @@ pub trait Widget : DowncastSync {
     /// Usually only called by the UI.
     /// Usually not to be reimplemented.
     fn pointer_enter_wrap(&mut self) {
-	self.stub_mut().hovered = true;
-	self.ask_for_repaint();
-	self.pointer_enter();
+        self.stub_mut().hovered = true;
+        self.ask_for_repaint();
+        self.pointer_enter();
     }
 
     /// Wrapper for the `pointer_leave()` event function.
@@ -274,9 +274,9 @@ pub trait Widget : DowncastSync {
     /// Usually only called by the UI.
     /// Usually not to be reimplemented.
     fn pointer_leave_wrap(&mut self) {
-	self.stub_mut().hovered = false;
-	self.ask_for_repaint();
-	self.pointer_leave();
+        self.stub_mut().hovered = false;
+        self.ask_for_repaint();
+        self.pointer_leave();
     }
 }
 impl_downcast!(sync Widget);
@@ -302,22 +302,22 @@ pub struct WidgetStub {
 
 impl Default for WidgetStub {
     fn default() -> WidgetStub {
-	WidgetStub {
-	    layout: Layout::default(),
-	    has_focus: false,
-	    needs_repaint: false,
-	    sensitive: true,
-	    hovered: false,
-	    reminder_request: None
-	}
+        WidgetStub {
+            layout: Layout::default(),
+            has_focus: false,
+            needs_repaint: false,
+            sensitive: true,
+            hovered: false,
+            reminder_request: None
+        }
     }
 }
 
 impl WidgetStub {
     fn needs_repaint(&mut self) -> bool {
-	let nrp = self.needs_repaint;
-	self.needs_repaint = false;
-	nrp
+        let nrp = self.needs_repaint;
+        self.needs_repaint = false;
+        nrp
     }
 }
 
@@ -333,10 +333,10 @@ impl<W: Widget> Copy for WidgetHandle<W> { }
 
 impl<W: Widget> Clone for WidgetHandle<W> {
     fn clone(&self) -> WidgetHandle<W> {
-	WidgetHandle::<W> {
-	    id: self.id,
-	    widget_type: PhantomData::<W>
-	}
+        WidgetHandle::<W> {
+            id: self.id,
+            widget_type: PhantomData::<W>
+        }
     }
 }
 
@@ -345,10 +345,10 @@ impl<W: Widget> WidgetHandle<W> {
     ///
     /// Called by UI.
     pub(crate) fn new(id: Id) -> Self {
-	WidgetHandle::<W> {
-	    id: id,
-	    widget_type: PhantomData::<W>
-	}
+        WidgetHandle::<W> {
+            id: id,
+            widget_type: PhantomData::<W>
+        }
     }
 
     pub fn id(&self) -> Id { self.id }
@@ -357,11 +357,11 @@ impl<W: Widget> WidgetHandle<W> {
 #[macro_export]
 macro_rules! widget_stub {
     () => {
-	fn stub (&self) -> &$crate::widget::WidgetStub {
+        fn stub (&self) -> &$crate::widget::WidgetStub {
             &self.stub
-	}
-	fn stub_mut (&mut self) -> &mut $crate::widget::WidgetStub {
+        }
+        fn stub_mut (&mut self) -> &mut $crate::widget::WidgetStub {
             &mut self.stub
-	}
+        }
     }
 }

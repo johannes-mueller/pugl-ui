@@ -10,7 +10,7 @@ use crate::widget::*;
 
 pub trait LayouterImpl: DowncastSync {
     fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
-		   orig_pos: Coord, available_size: Size);
+                   orig_pos: Coord, available_size: Size);
     fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size;
 }
 impl_downcast!(sync LayouterImpl);
@@ -38,17 +38,17 @@ struct StackLayoutData {
 
 impl Default for StackLayoutData {
     fn default() -> StackLayoutData {
-	StackLayoutData {
-	    padding: 0.0,
-	    spacing: 5.0,
-	    subnodes: VecDeque::new(),
-	}
+        StackLayoutData {
+            padding: 0.0,
+            spacing: 5.0,
+            subnodes: VecDeque::new(),
+        }
     }
 }
 
 impl StackLayoutData {
     fn pack(&mut self, subnode_id: Id, target: StackDirection) {
-	match target {
+        match target {
             StackDirection::Back  => self.subnodes.push_back(subnode_id),
             StackDirection::Front => self.subnodes.push_front(subnode_id)
         };
@@ -64,27 +64,27 @@ pub struct HorizontalLayouterImpl {
 
 impl HorizontalLayouterImpl {
     pub fn set_spacing(&mut self, s: Spacing) -> &mut HorizontalLayouterImpl {
-	self.d.spacing = s;
-	self
+        self.d.spacing = s;
+        self
     }
     pub fn set_padding(&mut self, s: Spacing) -> &mut HorizontalLayouterImpl {
-	self.d.padding = s;
-	self
+        self.d.padding = s;
+        self
     }
 }
 
 impl Default for HorizontalLayouterImpl {
     fn default() -> HorizontalLayouterImpl {
-	HorizontalLayouterImpl {
-	    d: StackLayoutData::default()
-	}
+        HorizontalLayouterImpl {
+            d: StackLayoutData::default()
+        }
     }
 }
 
 impl LayouterImpl for HorizontalLayouterImpl {
     fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
-		   orig_pos: Coord, size_avail: Size) {
-	let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
+                   orig_pos: Coord, size_avail: Size) {
+        let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
             if widgets[children[*sn].id].sized_width() {
                 acc + 1
             } else {
@@ -118,14 +118,14 @@ impl LayouterImpl for HorizontalLayouterImpl {
             if width > 0.0 {
                 pos += Coord { x: width, y: 0.0 };
             }
-	    if sized_width {
-		pos += Coord { x: self.d.spacing, y: 0.0 };
-	    }
+            if sized_width {
+                pos += Coord { x: self.d.spacing, y: 0.0 };
+            }
         }
     }
 
     fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
-	let mut need = Size::default();
+        let mut need = Size::default();
         need.w += self.d.padding;
         for subnode in self.d.subnodes.iter() {
 
@@ -139,7 +139,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
         need.w += self.d.padding - self.d.spacing;
         need.h += 2.*self.d.padding;
 
-	need
+        need
     }
 }
 
@@ -152,13 +152,13 @@ impl Layouter for HorizontalLayouter {
     type Implementor = HorizontalLayouterImpl;
 
     fn new_implementor() -> Box<dyn LayouterImpl> {
-	Box::new(HorizontalLayouterImpl::default())
+        Box::new(HorizontalLayouterImpl::default())
     }
     fn pack(&mut self, layout_impl: &mut Self::Implementor, subnode_id: Id, target: Self::Target) {
-	layout_impl.pack(subnode_id, target);
+        layout_impl.pack(subnode_id, target);
     }
     fn expandable() -> (bool, bool) {
-	(true, false)
+        (true, false)
     }
 }
 
@@ -172,26 +172,26 @@ pub struct VerticalLayouterImpl {
 
 impl VerticalLayouterImpl {
     pub fn set_spacing(&mut self, s: Spacing) -> &mut VerticalLayouterImpl {
-	self.d.spacing = s;
-	self
+        self.d.spacing = s;
+        self
     }
     pub fn set_padding(&mut self, s: Spacing) -> &mut VerticalLayouterImpl {
-	self.d.padding = s;
-	self
+        self.d.padding = s;
+        self
     }
 }
 
 impl Default for VerticalLayouterImpl {
     fn default() -> VerticalLayouterImpl {
-	VerticalLayouterImpl {
-	    d: StackLayoutData::default()
-	}
+        VerticalLayouterImpl {
+            d: StackLayoutData::default()
+        }
     }
 }
 
 impl LayouterImpl for VerticalLayouterImpl {
     fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
-		   orig_pos: Coord, size_avail: Size) {
+                   orig_pos: Coord, size_avail: Size) {
         let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
             if widgets[children[*sn].id].sized_height() {
                 acc + 1
@@ -225,15 +225,15 @@ impl LayouterImpl for VerticalLayouterImpl {
             if height > 0.0 {
                 pos += Coord { x: 0.0, y: height };
             }
-	    if sized_height {
-		pos += Coord { x: 0.0, y:  self.d.spacing };
-	    }
+            if sized_height {
+                pos += Coord { x: 0.0, y:  self.d.spacing };
+            }
         }
 
     }
 
     fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
-	let mut need = Size::default();
+        let mut need = Size::default();
         need.h += self.d.padding;
         for subnode in self.d.subnodes.iter() {
 
@@ -247,7 +247,7 @@ impl LayouterImpl for VerticalLayouterImpl {
         need.w += 2.*self.d.padding;
         need.h += self.d.padding - self.d.spacing;
 
-	need
+        need
     }
 }
 
@@ -260,13 +260,13 @@ impl Layouter for VerticalLayouter {
     type Implementor = VerticalLayouterImpl;
 
     fn new_implementor() -> Box<dyn LayouterImpl> {
-	Box::new(VerticalLayouterImpl::default())
+        Box::new(VerticalLayouterImpl::default())
     }
     fn pack(&mut self, layout_impl: &mut Self::Implementor, subnode_id: Id, target: Self::Target) {
-	layout_impl.pack(subnode_id, target);
+        layout_impl.pack(subnode_id, target);
     }
     fn expandable() -> (bool, bool) {
-	(false, true)
+        (false, true)
     }
 }
 
@@ -283,8 +283,8 @@ pub struct LayoutWidget {
 
 impl LayoutWidget {
     pub(crate) fn set_expandable(&mut self, we: bool, he: bool) {
-	self.width_expandable = we;
-	self.height_expandable = he;
+        self.width_expandable = we;
+        self.height_expandable = he;
     }
 }
 
@@ -323,8 +323,8 @@ impl Widget for Spacer {
 
 impl Spacer {
     pub(crate) fn set_expandable(&mut self, (we, he): (bool, bool)) {
-	self.width_expandable = we;
-	self.height_expandable = he;
+        self.width_expandable = we;
+        self.height_expandable = he;
     }
 }
 
@@ -335,10 +335,10 @@ pub struct LayoutWidgetHandle<L: Layouter, W: Widget> {
 
 impl<L: Layouter, W: Widget> Clone for LayoutWidgetHandle<L, W> {
     fn clone(&self) -> Self {
-	LayoutWidgetHandle::<L, W> {
-	    widget_handle: self.widget_handle.clone(),
-	    layouter: L::default()
-	}
+        LayoutWidgetHandle::<L, W> {
+            widget_handle: self.widget_handle.clone(),
+            layouter: L::default()
+        }
     }
 }
 
@@ -346,15 +346,15 @@ impl<L: Layouter, W: Widget> Copy for LayoutWidgetHandle<L, W> { }
 
 impl<L: Layouter, W: Widget> LayoutWidgetHandle<L, W> {
     pub fn new(widget_handle: WidgetHandle<W>) -> LayoutWidgetHandle<L, W> {
-	LayoutWidgetHandle { widget_handle, layouter: L::default() }
+        LayoutWidgetHandle { widget_handle, layouter: L::default() }
     }
     pub fn widget(&self) -> WidgetHandle<W> {
-	self.widget_handle
+        self.widget_handle
     }
     pub fn layouter(&mut self) -> &mut L {
-	&mut self.layouter
+        &mut self.layouter
     }
     pub fn expandable() -> (bool, bool) {
-	L::expandable()
+        L::expandable()
     }
 }

@@ -41,7 +41,7 @@ impl WidgetNode {
     }
 
     pub fn set_layouter(&mut self, layouter: Box<dyn LayouterImpl>) {
-	self.layouter = Some(layouter);
+        self.layouter = Some(layouter);
     }
 
     fn search(&self, path: VecDeque<Id>, id: Id) -> (VecDeque<Id>, bool) {
@@ -70,28 +70,28 @@ impl WidgetNode {
     }
 
     fn layouter_impl<L: Layouter>(&mut self) -> &mut L::Implementor {
-	self.layouter
-	    .as_deref_mut().expect("::pack(), no layouter found")
-	    .downcast_mut::<L::Implementor>().expect("downcast of layouter failed")
+        self.layouter
+            .as_deref_mut().expect("::pack(), no layouter found")
+            .downcast_mut::<L::Implementor>().expect("downcast of layouter failed")
     }
 
     fn pack<L: Layouter, W: Widget>(&mut self, widget: Id, mut parent: LayoutWidgetHandle<L, W>, target: L::Target) {
-	let subnode_id = match self.children.iter().position(|ref node| node.id == widget) {
+        let subnode_id = match self.children.iter().position(|ref node| node.id == widget) {
             Some(id) => id,
             None => {
                 return;
             }
         };
 
-	parent.layouter().pack(self.layouter_impl::<L>(), subnode_id, target);
+        parent.layouter().pack(self.layouter_impl::<L>(), subnode_id, target);
     }
 
     pub(crate) fn apply_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>, orig_pos: Coord) {
         let size_avail = widgets[self.id].size();
 
-	if let Some(layouter) = &self.layouter {
-	    layouter.apply_sizes(widgets, &self.children, orig_pos, size_avail);
-	}
+        if let Some(layouter) = &self.layouter {
+            layouter.apply_sizes(widgets, &self.children, orig_pos, size_avail);
+        }
     }
 
     pub(crate) fn calc_widget_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>) -> Size {
@@ -103,36 +103,36 @@ impl WidgetNode {
             return size;
         }
 
-	let size = self.layouter
-	    .as_ref()
-	    .expect("::calc_widget_sizes() no layouter found")
-	    .calc_widget_sizes(widgets, &self.children);
+        let size = self.layouter
+            .as_ref()
+            .expect("::calc_widget_sizes() no layouter found")
+            .calc_widget_sizes(widgets, &self.children);
 
-	widgets[self.id].set_size(&size);
+        widgets[self.id].set_size(&size);
 
-	size
+        size
     }
 
     fn detect_expandables(&self, widgets: &mut Vec<Box<dyn Widget>>) -> (bool, bool) {
-	if self.children.is_empty() {
-	    let wgt = &widgets[self.id];
-	    return (wgt.width_expandable(), wgt.height_expandable())
-	}
+        if self.children.is_empty() {
+            let wgt = &widgets[self.id];
+            return (wgt.width_expandable(), wgt.height_expandable())
+        }
 
-	let mut width_exp = false;
-	let mut height_exp = false;
+        let mut width_exp = false;
+        let mut height_exp = false;
 
-	for c in self.children.iter() {
-	    let (we, he) = c.detect_expandables(widgets);
-	    width_exp = we || width_exp;
-	    height_exp = he || height_exp;
-	}
+        for c in self.children.iter() {
+            let (we, he) = c.detect_expandables(widgets);
+            width_exp = we || width_exp;
+            height_exp = he || height_exp;
+        }
 
-	if self.id != 0 {
-	    let lw = &mut widgets[self.id].downcast_mut::<LayoutWidget>().expect("Downcast to LayoutWidget failed.");
-	    lw.set_expandable(width_exp, height_exp);
-	}
-	(width_exp, height_exp)
+        if self.id != 0 {
+            let lw = &mut widgets[self.id].downcast_mut::<LayoutWidget>().expect("Downcast to LayoutWidget failed.");
+            lw.set_expandable(width_exp, height_exp);
+        }
+        (width_exp, height_exp)
     }
 }
 
@@ -152,7 +152,7 @@ pub struct UI<RW: Widget + 'static> {
 
 impl<RW: Widget + 'static> UI<RW> {
     pub fn new(root_widget: Box<RW>) -> UI<RW> {
-	let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0));
+        let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0));
         UI {
             view: ptr::null_mut(),
             root_widget: WidgetNode {
@@ -160,59 +160,59 @@ impl<RW: Widget + 'static> UI<RW> {
                 layouter: Some(VerticalLayouter::new_implementor()),
                 children: vec![]
             },
-	    unlayouted_nodes: HashMap::new(),
-	    root_widget_handle,
+            unlayouted_nodes: HashMap::new(),
+            root_widget_handle,
             focused_widget: 0,
             widgets: vec![root_widget],
             drag_ongoing: false,
-	    have_focus: false,
-	    widget_under_pointer: 0,
+            have_focus: false,
+            widget_under_pointer: 0,
             close_request_issued: false
         }
     }
 
     pub fn new_widget<W: Widget>(&mut self, widget: Box<W>) -> WidgetHandle<W> {
-	let id = self.widgets.len();
-	self.widgets.push(widget);
-	self.unlayouted_nodes.insert(id, WidgetNode::new(id));
+        let id = self.widgets.len();
+        self.widgets.push(widget);
+        self.unlayouted_nodes.insert(id, WidgetNode::new(id));
 
-	WidgetHandle::<W>::new(id)
+        WidgetHandle::<W>::new(id)
     }
 
     pub fn new_layouter<L>(&mut self) -> LayoutWidgetHandle<L, LayoutWidget>
     where L: Layouter {
-	let lw = self.new_widget(Box::new(LayoutWidget::default()));
-	self.set_layouter::<L>(lw)
+        let lw = self.new_widget(Box::new(LayoutWidget::default()));
+        self.set_layouter::<L>(lw)
     }
 
     pub fn set_layouter<L>(&mut self, lw: WidgetHandle<LayoutWidget>) -> LayoutWidgetHandle<L, LayoutWidget>
     where L: Layouter {
-	self.find_node(lw.id()).set_layouter(L::new_implementor());
-	LayoutWidgetHandle::<L, LayoutWidget>::new(lw)
+        self.find_node(lw.id()).set_layouter(L::new_implementor());
+        LayoutWidgetHandle::<L, LayoutWidget>::new(lw)
     }
 
     pub fn add_spacer<L>(&mut self, parent: LayoutWidgetHandle<L, LayoutWidget>, target: L::Target)
     where L: Layouter {
-	let sp = self.new_widget(Box::new(Spacer::default()));
-	self.pack_to_layout(sp, parent, target);
+        let sp = self.new_widget(Box::new(Spacer::default()));
+        self.pack_to_layout(sp, parent, target);
     }
 
     pub fn layouter_handle<L, W>(&mut self, layouter: LayoutWidgetHandle<L, W>) -> &mut L::Implementor
     where L: Layouter, W: Widget {
-	self.find_node(layouter.widget().id()).layouter_impl::<L>()
+        self.find_node(layouter.widget().id()).layouter_impl::<L>()
     }
 
     pub fn pack_to_layout<L, W, PW>(&mut self, widget: WidgetHandle<W>, parent: LayoutWidgetHandle<L, PW>, target: L::Target)
     where L: Layouter,
-	  W: Widget,
-	  PW: Widget {
+          W: Widget,
+          PW: Widget {
 
-	let id = widget.id();
-	if let Some(sp) = self.widgets[id].downcast_mut::<Spacer>() {
-	    sp.set_expandable(L::expandable());
-	}
+        let id = widget.id();
+        if let Some(sp) = self.widgets[id].downcast_mut::<Spacer>() {
+            sp.set_expandable(L::expandable());
+        }
 
-	let new_node = self.unlayouted_nodes.remove(&id).expect("widget already layouted?");
+        let new_node = self.unlayouted_nodes.remove(&id).expect("widget already layouted?");
         let node = self.find_node(parent.widget().id());
 
         node.children.push (new_node);
@@ -220,13 +220,13 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     pub fn do_layout(&mut self) {
-	if self.unlayouted_nodes.len() > 0 {
-	    eprintln!("WARNING: Rendering layout with {} unlayouted widgets!", self.unlayouted_nodes.len());
-	}
+        if self.unlayouted_nodes.len() > 0 {
+            eprintln!("WARNING: Rendering layout with {} unlayouted widgets!", self.unlayouted_nodes.len());
+        }
         let orig_size = self.widgets[0].size();
         let new_size = {
             let widgets = &mut self.widgets;
-	    self.root_widget.detect_expandables(widgets);
+            self.root_widget.detect_expandables(widgets);
             self.root_widget.calc_widget_sizes(widgets);
             let size = widgets[0].size();
             let new_size = if (orig_size.w > size.w) || (orig_size.h > size.h) {
@@ -243,34 +243,34 @@ impl<RW: Widget + 'static> UI<RW> {
 
     pub fn fit_window_size(&self) {
         let size = self.widgets[0].size();
-	if size.h * size.w == 0.0 {
-	    panic!("Root window size zero. Have you forgotten ui::UI::do_layout()?");
-	}
+        if size.h * size.w == 0.0 {
+            panic!("Root window size zero. Have you forgotten ui::UI::do_layout()?");
+        }
         self.set_frame(size.w, size.h);
     }
 
     pub fn fit_window_min_size(&self) {
         let size = self.widgets[0].size();
-	if size.h * size.w == 0.0 {
-	    panic!("Minimal root size zero. Have you forgotten ui::UI::do_layout()?");
-	}
+        if size.h * size.w == 0.0 {
+            panic!("Minimal root size zero. Have you forgotten ui::UI::do_layout()?");
+        }
         self.set_min_size(size.w as i32, size.h as i32);
     }
 
     pub fn close_request_issued(&self) -> bool {
-	self.close_request_issued
+        self.close_request_issued
     }
 
     pub fn root_layout(&self) -> LayoutWidgetHandle<VerticalLayouter, RW> {
-	self.root_widget_handle
+        self.root_widget_handle
     }
 
     pub fn root_widget(&mut self) -> &mut RW {
-	self.widgets[0].downcast_mut::<RW>().expect("Root Widget cast failed")
+        self.widgets[0].downcast_mut::<RW>().expect("Root Widget cast failed")
     }
 
     pub fn widget<W: Widget>(&mut self, widget: WidgetHandle<W>) -> &mut W {
-	self.widgets[widget.id()].downcast_mut::<W>().expect("Widget cast failed!")
+        self.widgets[widget.id()].downcast_mut::<W>().expect("Widget cast failed!")
     }
 
     pub fn focus_next_widget (&mut self) {
@@ -291,17 +291,17 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     pub fn has_focus(&self) -> bool {
-	self.have_focus
+        self.have_focus
     }
 
     pub fn next_event(&mut self, timeout: f64) {
-	for w in self.widgets.iter_mut() {
-	    if w.needs_repaint() {
-		self.post_redisplay();
-		break;
-	    }
-	}
-	self.update(timeout);
+        for w in self.widgets.iter_mut() {
+            if w.needs_repaint() {
+                self.post_redisplay();
+                break;
+            }
+        }
+        self.update(timeout);
     }
 
     fn pass_exposed(&self, node: &WidgetNode, expose: &ExposeArea, cr: &cairo::Context) {
@@ -322,14 +322,14 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     fn find_node(&mut self, id: Id) -> &mut WidgetNode {
-	match self.unlayouted_nodes.get_mut(&id) {
-	    Some(l) => l,
-	    None => {
-		let path = VecDeque::new();
-		let (path, _) = self.root_widget.search(path, id);
-		self.root_widget.get_node_by_path(path)
-	    }
-	}
+        match self.unlayouted_nodes.get_mut(&id) {
+            Some(l) => l,
+            None => {
+                let path = VecDeque::new();
+                let (path, _) = self.root_widget.search(path, id);
+                self.root_widget.get_node_by_path(path)
+            }
+        }
     }
 }
 
@@ -391,40 +391,40 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
         let mut event_path = self.event_path(&self.root_widget, ev.context.pos, VecDeque::new());
         let mut evop = Some(ev);
 
-	if let Some(id) = event_path.back() {
-	    if self.widget_under_pointer != *id {
-		self.widgets[self.widget_under_pointer].pointer_leave_wrap();
-		self.widgets[*id].pointer_enter_wrap();
-		self.widget_under_pointer = *id;
-	    }
-	}
+        if let Some(id) = event_path.back() {
+            if self.widget_under_pointer != *id {
+                self.widgets[self.widget_under_pointer].pointer_leave_wrap();
+                self.widgets[*id].pointer_enter_wrap();
+                self.widget_under_pointer = *id;
+            }
+        }
 
         while let Some(id) = event_path.pop_back() {
             evop = match evop {
                 Some(ev) => {
                     let ev = self.widgets[id].event(ev);
-		    if let Some(timeout) = self.widgets[id].reminder_request() {
-			self.start_timer(id, timeout);
-		    }
+                    if let Some(timeout) = self.widgets[id].reminder_request() {
+                        self.start_timer(id, timeout);
+                    }
                     ev
                 },
                 None => break
             }
         }
 
-	Status::Success
+        Status::Success
     }
 
     fn focus_in(&mut self) -> Status {
-	self.have_focus = true;
-	self.widgets[self.focused_widget].set_focus(true);
-	Status::Success
+        self.have_focus = true;
+        self.widgets[self.focused_widget].set_focus(true);
+        Status::Success
     }
 
     fn focus_out(&mut self) -> Status {
-	self.have_focus = false;
-	self.widgets[self.focused_widget].set_focus(false);
-	Status::Success
+        self.have_focus = false;
+        self.widgets[self.focused_widget].set_focus(false);
+        Status::Success
     }
 
     fn resize (&mut self, size: Size) {
@@ -437,8 +437,8 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
     }
 
     fn timer_event(&mut self, id: usize) -> Status {
-	self.widgets[id].reminder_handler();
-	Status::Success
+        self.widgets[id].reminder_handler();
+        Status::Success
     }
 
     fn set_view (&mut self, v: PuglViewFFI) {
