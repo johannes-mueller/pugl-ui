@@ -355,6 +355,7 @@ mod tests {
         ui.fit_window_size();
         ui.fit_window_min_size();
         ui.set_window_title("Test Pugl");
+        ui.make_resizable();
         ui.show_window();
 
         while !(ui.close_request_issued() || ui.root_widget().wants_quit()) {

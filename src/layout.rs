@@ -278,13 +278,23 @@ impl Layouter for VerticalLayouter {
 pub struct LayoutWidget {
     stub: WidgetStub,
     width_expandable: bool,
-    height_expandable: bool
+    height_expandable: bool,
+
+    width_locked: bool,
+    height_locked: bool,
 }
 
 impl LayoutWidget {
     pub(crate) fn set_expandable(&mut self, we: bool, he: bool) {
-        self.width_expandable = we;
-        self.height_expandable = he;
+        self.width_expandable = we && !self.width_locked;
+        self.height_expandable = he && !self.height_locked;
+    }
+
+    pub fn lock_width(&mut self) {
+        self.width_locked = true;
+    }
+    pub fn lock_height(&mut self) {
+        self.height_locked = true;
     }
 }
 
