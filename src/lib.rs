@@ -39,7 +39,7 @@ mod tests {
     impl Widget
         for RootWidget {
         widget_stub!();
-        fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
+        fn exposed (&mut self, _expose: &ExposeArea, cr: &cairo::Context) {
             cr.set_source_rgb (0.2, 0.2, 0.2);
             let size = self.size();
             cr.rectangle (0., 0., size.w, size.h);
@@ -95,7 +95,7 @@ mod tests {
 
     impl Widget for RectWidget {
         widget_stub!();
-        fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
+        fn exposed (&mut self, _expose: &ExposeArea, cr: &cairo::Context) {
             let (r, g, b) = self.color;
             let size = self.size();
             let pos = self.pos();

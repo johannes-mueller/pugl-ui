@@ -304,10 +304,10 @@ impl<RW: Widget + 'static> UI<RW> {
         self.update(timeout);
     }
 
-    fn pass_exposed(&self, node: &WidgetNode, expose: &ExposeArea, cr: &cairo::Context) {
-        self.widgets[node.id].exposed (expose, cr);
+    fn make_expose_queue(&self, node: &WidgetNode, expose_queue: &mut Vec<Id>) {
+        expose_queue.push(node.id);
         for c in node.children.iter() {
-            self.pass_exposed(c, expose, cr);
+            self.make_expose_queue(c, expose_queue);
         }
     }
 
@@ -337,7 +337,11 @@ impl<RW: Widget + 'static> UI<RW> {
 
 impl<RW: Widget> PuglViewTrait for UI<RW> {
     fn exposed (&mut self, expose: &ExposeArea, cr: &cairo::Context) {
-        self.pass_exposed(&self.root_widget, expose, cr);
+        let mut expose_queue: Vec<Id> = Vec::with_capacity(self.widgets.len());
+        self.make_expose_queue(&self.root_widget, &mut expose_queue);
+        for wid in expose_queue {
+            self.widgets[wid].exposed(expose, cr);
+        }
     }
 
     fn event (&mut self, ev: Event) -> Status {

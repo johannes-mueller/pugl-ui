@@ -31,7 +31,7 @@ pub trait Widget : DowncastSync {
     ///
     /// The default implementation just passes the event without touching it.
     ///
-    fn event (&mut self, ev: Event) -> Option<Event> {
+    fn event(&mut self, ev: Event) -> Option<Event> {
         Some (ev)
     }
 
@@ -44,7 +44,7 @@ pub trait Widget : DowncastSync {
     /// actually needs to be redrawn.
     ///
     /// Default implementation does nothing.
-    fn exposed (&self, _expose: &ExposeArea, _cr: &cairo::Context) {}
+    fn exposed(&mut self, _expose: &ExposeArea, _cr: &cairo::Context) {}
 
     /// Supposed to return the minimum size of the widget.
     ///
