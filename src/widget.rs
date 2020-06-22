@@ -129,6 +129,30 @@ pub trait Widget : DowncastSync {
         size
     }
 
+    /// Returns the positon (upper left corner of the widget)
+    ///
+    /// Usually not to be reimplemented.
+    fn pos (&self) -> Coord {
+        let pos = self.stub().layout.pos;
+        pos
+    }
+
+    /// Returns the six scalar values to conveniently describe the widget's geometry
+    /// (left, right, top, bottom, width, height)
+    ///
+    /// Usually not to be reimplemented
+    ///
+    /// Useful in implementations of `::exposed()` when used as
+    /// `let (left, right, top, bottom, width, height) = self.geometry();`
+    ///
+    fn geometry(&self) -> (f64, f64, f64, f64, f64, f64) {
+        let x = self.pos().x;
+        let y = self.pos().y;
+        let w = self.size().w;
+        let h = self.size().h;
+        (x, x+w, y, y+h, w, h)
+    }
+
     /// Returns true iff the widget has a defined minimum width
     ///
     /// Usually not to be reimplemented.
@@ -204,14 +228,6 @@ pub trait Widget : DowncastSync {
     /// Probably not needed as only used once in UI
     fn set_layout(&mut self, layout: &Layout) {
         self.stub_mut().layout = *layout;
-    }
-
-    /// Returns the positon (upper left corner of the widget)
-    ///
-    /// Usually not to be reimplemented.
-    fn pos (&self) -> Coord {
-        let pos = self.stub().layout.pos;
-        pos
     }
 
     /// Returns true iff the widget is sensitive to user evnets.
