@@ -181,7 +181,7 @@ impl<RW: Widget + 'static> UI<RW> {
         ui
     }
 
-    pub fn new_widget<W: Widget>(&mut self, mut widget: Box<W>) -> WidgetHandle<W> {
+    pub fn new_widget<W: Widget>(&mut self, widget: Box<W>) -> WidgetHandle<W> {
         let id = self.widgets.len();
         self.widgets.push(widget);
         self.unlayouted_nodes.insert(id, WidgetNode::new(id));
@@ -305,12 +305,16 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     pub fn next_event(&mut self, timeout: f64) {
-        for (id, w) in self.widgets.iter_mut().enumerate() {
+        for id in 0..self.widgets.len() {
+            let w = &mut self.widgets[id];
             if w.needs_repaint() {
                 let pos = w.pos().scale(self.scale_factor);
                 let size = w.size().scale(self.scale_factor);
                 self.post_redisplay_rect(pos, size);
                 break;
+            }
+            if let Some(timeout) = w.reminder_request() {
+                self.start_timer(id, timeout);
             }
         }
         self.update(timeout);
@@ -425,11 +429,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
         while let Some(id) = event_path.pop_back() {
             evop = match evop {
                 Some(ev) => {
-                    let ev = self.widgets[id].event(ev);
-                    if let Some(timeout) = self.widgets[id].reminder_request() {
-                        self.start_timer(id, timeout);
-                    }
-                    ev
+                    self.widgets[id].event(ev)
                 },
                 None => break
             }
