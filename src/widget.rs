@@ -80,8 +80,10 @@ pub trait Widget : DowncastSync {
 
     /// Called when the requested reminding time is passed
     ///
-    /// Default implementation does nothing.
-    fn reminder_handler(&mut self) { }
+    /// Supposed to return true, iff the reminder is still needed
+    ///
+    /// Default implementation does nothing and returns false.
+    fn reminder_handler(&mut self) -> bool { false }
 
     /// Supposed to return a reference to the `WidgetStub` of the widget
     ///

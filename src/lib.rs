@@ -176,9 +176,10 @@ mod tests {
             }.and_then (|es| es.pass_event (ev))
         }
 
-        fn reminder_handler(&mut self) {
+        fn reminder_handler(&mut self) -> bool {
             self.recently_clicked = false;
             self.ask_for_repaint();
+            false
         }
 
         fn min_size(&self) -> Size { self.min_size }

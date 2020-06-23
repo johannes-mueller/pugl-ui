@@ -460,7 +460,9 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
     }
 
     fn timer_event(&mut self, id: usize) -> Status {
-        self.widgets[id].reminder_handler();
+        if !self.widgets[id].reminder_handler() {
+            self.stop_timer(id);
+        }
         Status::Success
     }
 
