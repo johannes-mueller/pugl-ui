@@ -311,6 +311,8 @@ impl Widget for LayoutWidget {
 
     fn sized_width(&self) -> bool { true }
     fn sized_height(&self) -> bool { true }
+    fn pointer_enter_wrap(&mut self) {}
+    fn pointer_leave_wrap(&mut self) {}
 }
 
 #[derive(Default)]

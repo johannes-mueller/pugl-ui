@@ -305,19 +305,26 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     pub fn next_event(&mut self, timeout: f64) {
-        for w in self.widgets.iter_mut() {
+        for (id, w) in self.widgets.iter_mut().enumerate() {
             if w.needs_repaint() {
-                self.post_redisplay();
+                let pos = w.pos().scale(self.scale_factor);
+                let size = w.size().scale(self.scale_factor);
+                self.post_redisplay_rect(pos, size);
                 break;
             }
         }
         self.update(timeout);
     }
 
-    fn make_expose_queue(&self, node: &WidgetNode, expose_queue: &mut Vec<Id>) {
+    fn make_expose_queue(&self, node: &WidgetNode, area: &ExposeArea, expose_queue: &mut Vec<Id>) {
+        let pos = area.pos.scale(1./self.scale_factor);
+        let size = area.size.scale(1./self.scale_factor);
+        if !self.widgets[node.id].intersects_with(pos, size) {
+            return;
+        }
         expose_queue.push(node.id);
         for c in node.children.iter() {
-            self.make_expose_queue(c, expose_queue);
+            self.make_expose_queue(c, area, expose_queue);
         }
     }
 
@@ -349,7 +356,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
     fn exposed (&mut self, expose: &ExposeArea, cr: &cairo::Context) {
         let mut expose_queue: Vec<Id> = Vec::with_capacity(self.widgets.len());
         cr.scale(self.scale_factor, self.scale_factor);
-        self.make_expose_queue(&self.root_widget, &mut expose_queue);
+        self.make_expose_queue(&self.root_widget, expose, &mut expose_queue);
         for wid in expose_queue {
             self.widgets[wid].exposed(expose, cr);
         }
@@ -404,7 +411,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
             }
         };
 
-        let mut event_path = self.event_path(&self.root_widget, ev.context.pos, VecDeque::new());
+        let mut event_path = self.event_path(&self.root_widget, ev.pos(), VecDeque::new());
         let mut evop = Some(ev);
 
         if let Some(id) = event_path.back() {

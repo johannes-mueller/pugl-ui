@@ -257,6 +257,30 @@ pub trait Widget : DowncastSync {
         (pos.x > x1 && pos.x < x2) && (pos.y > y1 && pos.y < y2)
     }
 
+    fn intersects_with(&self, pos: Coord, size: Size) -> bool {
+        let layout = self.layout();
+
+        let left = layout.pos.x;
+        let right = left + layout.size.w;
+        let a_left = pos.x;
+        let a_right = pos.x + size.w;
+
+        if left > a_right || right < a_left {
+            return false;
+        }
+
+        let top = layout.pos.y;
+        let bottom = top + layout.size.h;
+        let a_top = pos.y;
+        let a_bottom = pos.y + size.h;
+
+        if top > a_bottom || bottom < a_top {
+            return false;
+        }
+
+        true
+    }
+
     /// Sets the widget's focus state to `yn`.
     ///
     /// Usually not to be reimplemented.
