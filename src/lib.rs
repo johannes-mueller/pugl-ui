@@ -36,8 +36,7 @@ mod tests {
         focus_next: bool
     }
 
-    impl Widget
-        for RootWidget {
+    impl Widget for RootWidget {
         widget_stub!();
         fn exposed (&mut self, _expose: &ExposeArea, cr: &cairo::Context) {
             cr.set_source_rgb (0.2, 0.2, 0.2);
@@ -213,7 +212,7 @@ mod tests {
 
     #[test]
     fn view_tk() {
-        let mut ui = Box::new(UI::new(Box::new(RootWidget::default())));
+        let mut ui = Box::new(UI::new_scaled(Box::new(RootWidget::default()), 1.5));
 
         let red = ui.new_widget (Box::new(RectWidget {
             color: (1., 0., 0.),

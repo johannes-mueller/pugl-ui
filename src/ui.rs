@@ -147,7 +147,9 @@ pub struct UI<RW: Widget + 'static> {
     widget_under_pointer: Id,
     drag_ongoing: bool,
     have_focus: bool,
-    close_request_issued: bool
+    close_request_issued: bool,
+
+    scale_factor: f64
 }
 
 impl<RW: Widget + 'static> UI<RW> {
@@ -167,11 +169,19 @@ impl<RW: Widget + 'static> UI<RW> {
             drag_ongoing: false,
             have_focus: false,
             widget_under_pointer: 0,
-            close_request_issued: false
+            close_request_issued: false,
+
+            scale_factor: 1.0
         }
     }
 
-    pub fn new_widget<W: Widget>(&mut self, widget: Box<W>) -> WidgetHandle<W> {
+    pub fn new_scaled(root_widget: Box<RW>, scale_factor: f64) -> UI<RW> {
+        let mut ui = UI::new(root_widget);
+        ui.scale_factor = scale_factor;
+        ui
+    }
+
+    pub fn new_widget<W: Widget>(&mut self, mut widget: Box<W>) -> WidgetHandle<W> {
         let id = self.widgets.len();
         self.widgets.push(widget);
         self.unlayouted_nodes.insert(id, WidgetNode::new(id));
@@ -242,7 +252,7 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     pub fn fit_window_size(&self) {
-        let size = self.widgets[0].size();
+        let size = self.widgets[0].size().scale(self.scale_factor);
         if size.h * size.w == 0.0 {
             panic!("Root window size zero. Have you forgotten ui::UI::do_layout()?");
         }
@@ -250,7 +260,7 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     pub fn fit_window_min_size(&self) {
-        let size = self.widgets[0].size();
+        let size = self.widgets[0].size().scale(self.scale_factor);
         if size.h * size.w == 0.0 {
             panic!("Minimal root size zero. Have you forgotten ui::UI::do_layout()?");
         }
@@ -338,6 +348,7 @@ impl<RW: Widget + 'static> UI<RW> {
 impl<RW: Widget> PuglViewTrait for UI<RW> {
     fn exposed (&mut self, expose: &ExposeArea, cr: &cairo::Context) {
         let mut expose_queue: Vec<Id> = Vec::with_capacity(self.widgets.len());
+        cr.scale(self.scale_factor, self.scale_factor);
         self.make_expose_queue(&self.root_widget, &mut expose_queue);
         for wid in expose_queue {
             self.widgets[wid].exposed(expose, cr);
@@ -345,6 +356,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
     }
 
     fn event (&mut self, ev: Event) -> Status {
+        let ev = ev.scale_pos(1./self.scale_factor);
         let ev = match self.widgets[0].event(ev) {
             Some(ev) => ev,
             None => return Status::Success
@@ -432,7 +444,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
     }
 
     fn resize (&mut self, size: Size) {
-        self.widgets[0].set_size (&size);
+        self.widgets[0].set_size (&size.scale(1./self.scale_factor));
         self.do_layout();
     }
 
