@@ -311,8 +311,8 @@ impl<RW: Widget + 'static> UI<RW> {
                 let pos = w.pos().scale(self.scale_factor);
                 let size = w.size().scale(self.scale_factor);
                 self.post_redisplay_rect(pos, size);
-                break;
             }
+            let w = &mut self.widgets[id];
             if let Some(timeout) = w.reminder_request() {
                 self.start_timer(id, timeout);
             }
