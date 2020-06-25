@@ -22,7 +22,7 @@ struct RootWidget {
 impl Widget for RootWidget {
     widget_stub!();
 
-    fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
+    fn exposed (&mut self, _expose: &ExposeArea, cr: &cairo::Context) {
         cr.set_source_rgb (0., 1., 0.);
         let size = self.size();
         cr.rectangle (0., 0., size.w, size.h);
@@ -47,7 +47,7 @@ impl Widget for RootWidget {
 
 impl RootWidget {
     pub fn wants_quit(&self) -> bool {
-	self.wants_quit
+        self.wants_quit
     }
 }
 
@@ -92,12 +92,12 @@ fn main() {
 
     println!("starting event looop");
     while !(ui.close_request_issued() || ui.root_widget().wants_quit()) {
-	ui.next_event(-1.0);
+        ui.next_event(-1.0);
 
-	if ui.widget(reset_button).clicked() {
-	    ui.widget(dial1).set_value(0.0);
-	    ui.widget(dial2).set_value(0.0);
-	    ui.widget(dial3).set_value(0.0);
-	}
+        if ui.widget(reset_button).clicked() {
+            ui.widget(dial1).set_value(0.0);
+            ui.widget(dial2).set_value(0.0);
+            ui.widget(dial3).set_value(0.0);
+        }
     }
 }

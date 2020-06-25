@@ -1,7 +1,6 @@
 
 use pango;
 
-use pugl_ui::ui::*;
 use pugl_sys::*;
 use pugl_ui::widget::*;
 
@@ -17,7 +16,7 @@ pub struct Button {
 impl Widget for Button {
     widget_stub!();
 
-    fn exposed (&self, _expose: &ExposeArea, cr: &cairo::Context) {
+    fn exposed (&mut self, _expose: &ExposeArea, cr: &cairo::Context) {
         let (r, g, b) = (0.7, 0.7, 0.7);
         let size = self.size();
         let pos = self.pos();
@@ -55,7 +54,7 @@ impl Widget for Button {
                 event_processed!()
             }
             EventType::MouseButtonRelease (_btn) => {
-		self.clicked = true;
+                self.clicked = true;
                 event_processed!()
             },
             EventType::KeyRelease (ke) => {
@@ -93,16 +92,16 @@ impl Button {
         let min_size: Size = Size { w: w.into(), h: h.into() };
 
         Box::new(Button {
-	    stub: WidgetStub::default(),
-	    text: String::from(text),
-	    min_size,
-	    clicked: false
-	})
+            stub: WidgetStub::default(),
+            text: String::from(text),
+            min_size,
+            clicked: false
+        })
     }
 
     pub fn clicked(&mut self) -> bool {
-	let clicked = self.clicked;
-	self.clicked = false;
-	clicked
+        let clicked = self.clicked;
+        self.clicked = false;
+        clicked
     }
 }
