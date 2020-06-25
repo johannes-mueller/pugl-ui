@@ -3,8 +3,6 @@
 use std::collections::{VecDeque,HashMap};
 use std::ptr;
 
-use cairo;
-
 use pugl_sys::pugl::*;
 
 use crate::layout::*;
@@ -230,7 +228,7 @@ impl<RW: Widget + 'static> UI<RW> {
     }
 
     pub fn do_layout(&mut self) {
-        if self.unlayouted_nodes.len() > 0 {
+        if !self.unlayouted_nodes.is_empty() {
             eprintln!("WARNING: Rendering layout with {} unlayouted widgets!", self.unlayouted_nodes.len());
         }
         let orig_size = self.widgets[0].size();

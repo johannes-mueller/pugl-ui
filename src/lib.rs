@@ -349,7 +349,7 @@ mod tests {
 
         ui.do_layout();
 
-        let view = PuglView::make_view(ui, std::ptr::null_mut());
+        let mut view = PuglView::make_view(ui, std::ptr::null_mut());
         let ui = view.handle();
 
         ui.fit_window_size();

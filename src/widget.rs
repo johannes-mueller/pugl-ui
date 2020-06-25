@@ -127,16 +127,14 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually not to be reimplemented.
     fn size (&self) -> Size {
-        let size = self.stub().layout.size;
-        size
+        self.stub().layout.size
     }
 
     /// Returns the positon (upper left corner of the widget)
     ///
     /// Usually not to be reimplemented.
     fn pos (&self) -> Coord {
-        let pos = self.stub().layout.pos;
-        pos
+        self.stub().layout.pos
     }
 
     /// Returns the six scalar values to conveniently describe the widget's geometry
@@ -388,7 +386,7 @@ impl<W: Widget> WidgetHandle<W> {
     /// Called by UI.
     pub(crate) fn new(id: Id) -> Self {
         WidgetHandle::<W> {
-            id: id,
+            id,
             widget_type: PhantomData::<W>
         }
     }

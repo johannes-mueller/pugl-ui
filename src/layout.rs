@@ -9,9 +9,9 @@ use crate::widget::*;
 
 
 pub trait LayouterImpl: DowncastSync {
-    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
+    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
                    orig_pos: Coord, available_size: Size);
-    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size;
+    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size;
 }
 impl_downcast!(sync LayouterImpl);
 
@@ -82,7 +82,7 @@ impl Default for HorizontalLayouterImpl {
 }
 
 impl LayouterImpl for HorizontalLayouterImpl {
-    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
+    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
                    orig_pos: Coord, size_avail: Size) {
         let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
             if widgets[children[*sn].id].sized_width() {
@@ -124,7 +124,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
         }
     }
 
-    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
+    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size {
         let mut need = Size::default();
         need.w += self.d.padding;
         for subnode in self.d.subnodes.iter() {
@@ -190,7 +190,7 @@ impl Default for VerticalLayouterImpl {
 }
 
 impl LayouterImpl for VerticalLayouterImpl {
-    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>,
+    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
                    orig_pos: Coord, size_avail: Size) {
         let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
             if widgets[children[*sn].id].sized_height() {
@@ -232,7 +232,7 @@ impl LayouterImpl for VerticalLayouterImpl {
 
     }
 
-    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &Vec<ui::WidgetNode>) -> Size {
+    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size {
         let mut need = Size::default();
         need.h += self.d.padding;
         for subnode in self.d.subnodes.iter() {
@@ -348,7 +348,7 @@ pub struct LayoutWidgetHandle<L: Layouter, W: Widget> {
 impl<L: Layouter, W: Widget> Clone for LayoutWidgetHandle<L, W> {
     fn clone(&self) -> Self {
         LayoutWidgetHandle::<L, W> {
-            widget_handle: self.widget_handle.clone(),
+            widget_handle: self.widget_handle,
             layouter: L::default()
         }
     }

@@ -81,7 +81,7 @@ fn main() {
 
     println!("setting up view");
 
-    let view = PuglView::make_view(ui, std::ptr::null_mut());
+    let mut view = PuglView::make_view(ui, std::ptr::null_mut());
 
     let ui = view.handle();
 
