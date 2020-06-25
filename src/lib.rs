@@ -212,7 +212,7 @@ mod tests {
 
 
     #[test]
-    fn view_tk() {
+    fn make_window() {
         let mut ui = Box::new(UI::new_scaled(Box::new(RootWidget::default()), 1.5));
 
         let red = ui.new_widget (Box::new(RectWidget {
@@ -362,7 +362,13 @@ mod tests {
             ui.next_event(-1.0);
 
             if ui.widget(red).clicked() {
-                println!("Click received rwidget");
+                println!("Click received red widget");
+            }
+
+            if ui.widget(yellow).is_hovered() {
+                ui.set_cursor(pugl_sys::Cursor::Hand);
+            } else {
+                ui.set_cursor(pugl_sys::Cursor::Arrow);
             }
 
             if ui.root_widget().focus_next() {
