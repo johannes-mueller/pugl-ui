@@ -23,7 +23,7 @@ they are part of the authors corporate identity.
 
 ## Status
 
-Early prototype stage. Currently only tested on Linux/X11
+Kind of beta testing stage. Currently only tested on Linux/X11
 
 
 ## How to use
@@ -50,10 +50,8 @@ to where you cloned this one to.
 
 ## Todo
 
-Still a lot.
-
-* Lots of code simplifications.
-
 * Documentation
 
-* For sure a lot mode
+However I am reluctant to put too much effort into documenting when the API is
+not stable. So first I will write some LV2 Plugins to see if everything works
+convenient.
