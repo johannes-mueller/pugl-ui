@@ -213,7 +213,9 @@ mod tests {
 
     #[test]
     fn make_window() {
-        let mut ui = Box::new(UI::new_scaled(Box::new(RootWidget::default()), 1.5));
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.5));
+        let ui = view.handle();
 
         let red = ui.new_widget (Box::new(RectWidget {
             color: (1., 0., 0.),
@@ -348,9 +350,6 @@ mod tests {
         ui.pack_to_layout(dark_gray, gray_lt, StackDirection::Front);
 
         ui.do_layout();
-
-        let mut view = PuglView::make_view(ui, std::ptr::null_mut());
-        let ui = view.handle();
 
         ui.fit_window_size();
         ui.fit_window_min_size();

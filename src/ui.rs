@@ -1,7 +1,6 @@
 //#![feature(get_type_id)]
 
 use std::collections::{VecDeque,HashMap};
-use std::ptr;
 
 use pugl_sys::pugl::*;
 
@@ -151,10 +150,10 @@ pub struct UI<RW: Widget + 'static> {
 }
 
 impl<RW: Widget + 'static> UI<RW> {
-    pub fn new(root_widget: Box<RW>) -> UI<RW> {
+    pub fn new(view: PuglViewFFI, root_widget: Box<RW>) -> UI<RW> {
         let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0));
         UI {
-            view: ptr::null_mut(),
+            view,
             root_widget: WidgetNode {
                 id: 0,
                 layouter: Some(VerticalLayouter::new_implementor()),
@@ -173,8 +172,8 @@ impl<RW: Widget + 'static> UI<RW> {
         }
     }
 
-    pub fn new_scaled(root_widget: Box<RW>, scale_factor: f64) -> UI<RW> {
-        let mut ui = UI::new(root_widget);
+    pub fn new_scaled(view: PuglViewFFI, root_widget: Box<RW>, scale_factor: f64) -> UI<RW> {
+        let mut ui = UI::new(view, root_widget);
         ui.scale_factor = scale_factor;
         ui
     }
@@ -254,7 +253,7 @@ impl<RW: Widget + 'static> UI<RW> {
         if size.h * size.w == 0.0 {
             panic!("Root window size zero. Have you forgotten ui::UI::do_layout()?");
         }
-        self.set_frame(size.w, size.h);
+        self.set_default_size(size.w as i32, size.h as i32);
     }
 
     pub fn fit_window_min_size(&self) {
@@ -464,9 +463,6 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
         Status::Success
     }
 
-    fn set_view (&mut self, v: PuglViewFFI) {
-        self.view = v;
-    }
     fn view (&self) -> PuglViewFFI {
         self.view
     }

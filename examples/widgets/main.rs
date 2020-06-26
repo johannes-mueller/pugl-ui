@@ -52,7 +52,9 @@ impl RootWidget {
 }
 
 fn main() {
-    let mut ui = Box::new(UI::new(Box::new(RootWidget::default())));
+    let rw = Box::new(RootWidget::default());
+    let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new(pv, rw));
+    let ui = view.handle();
 
     let top_layout = ui.new_layouter::<HorizontalLayouter>();
     let dial_layout = ui.new_layouter::<HorizontalLayouter>();
@@ -78,12 +80,7 @@ fn main() {
 
     ui.do_layout();
 
-
     println!("setting up view");
-
-    let mut view = PuglView::make_view(ui, std::ptr::null_mut());
-
-    let ui = view.handle();
 
     ui.fit_window_size();
     ui.fit_window_min_size();

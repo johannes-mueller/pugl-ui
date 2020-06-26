@@ -1,10 +1,10 @@
-
 use std::collections::VecDeque;
 
 use downcast_rs::DowncastSync;
 
 use pugl_sys::{Coord, Size};
 use crate::ui;
+use crate::layout::*;
 use crate::widget::*;
 
 
@@ -23,12 +23,6 @@ pub trait Layouter : Default + Clone + Copy {
     fn expandable() -> (bool, bool);
 }
 
-type Spacing = f64;
-
-pub enum StackDirection {
-    Front,
-    Back
-}
 
 struct StackLayoutData {
     padding: Spacing,
@@ -55,8 +49,6 @@ impl StackLayoutData {
     }
 }
 
-#[derive(Clone, Copy, Default, Debug)]
-pub struct HorizontalLayouter;
 
 pub struct HorizontalLayouterImpl {
     d: StackLayoutData
@@ -162,9 +154,6 @@ impl Layouter for HorizontalLayouter {
     }
 }
 
-
-#[derive(Clone, Copy, Default, Debug)]
-pub struct VerticalLayouter;
 
 pub struct VerticalLayouterImpl {
     d: StackLayoutData
@@ -315,27 +304,34 @@ impl Widget for LayoutWidget {
     fn pointer_leave_wrap(&mut self) {}
 }
 
-#[derive(Default)]
-pub struct Spacer {
-    stub: WidgetStub,
-    width_expandable: bool,
-    height_expandable: bool
+
+pub struct LayoutWidgetHandle<L: Layouter, W: Widget> {
+    widget_handle: WidgetHandle<W>,
+    layouter: L
 }
 
-impl Widget for Spacer {
-    fn stub (&self) -> &WidgetStub {
-        &self.stub
+impl<L: Layouter, W: Widget> Clone for LayoutWidgetHandle<L, W> {
+    fn clone(&self) -> Self {
+        LayoutWidgetHandle::<L, W> {
+            widget_handle: self.widget_handle,
+            layouter: L::default()
+        }
     }
-    fn stub_mut (&mut self) -> &mut WidgetStub {
-        &mut self.stub
-    }
-    fn width_expandable(&self) -> bool { self.width_expandable }
-    fn height_expandable(&self) -> bool { self.height_expandable }
 }
 
-impl Spacer {
-    pub(crate) fn set_expandable(&mut self, (we, he): (bool, bool)) {
-        self.width_expandable = we;
-        self.height_expandable = he;
+impl<L: Layouter, W: Widget> Copy for LayoutWidgetHandle<L, W> { }
+
+impl<L: Layouter, W: Widget> LayoutWidgetHandle<L, W> {
+    pub fn new(widget_handle: WidgetHandle<W>) -> LayoutWidgetHandle<L, W> {
+        LayoutWidgetHandle { widget_handle, layouter: L::default() }
+    }
+    pub fn widget(&self) -> WidgetHandle<W> {
+        self.widget_handle
+    }
+    pub fn layouter(&mut self) -> &mut L {
+        &mut self.layouter
+    }
+    pub fn expandable() -> (bool, bool) {
+        L::expandable()
     }
 }
