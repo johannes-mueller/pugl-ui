@@ -5,6 +5,7 @@ use std::collections::{VecDeque,HashMap};
 use pugl_sys::pugl::*;
 
 use crate::layout::*;
+use crate::layout_impl::*;
 use crate::widget::*;
 
 pub enum EventState {
