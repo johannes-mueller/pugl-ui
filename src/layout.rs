@@ -1,3 +1,12 @@
+//! A module for widget layouting. So fare there is the classical box
+//! stacking layout (like Gtk's HBox/Vbox) implemented. Other
+//! layouting algorithms can be implmented later.
+//!
+//! This module contains the items, that are needed to layout
+//! widgets.
+//!
+//! # Usage
+//!
 
 use crate::widget::*;
 

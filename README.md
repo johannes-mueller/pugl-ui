@@ -21,37 +21,36 @@ It does not, however, provide the widgets themselves. In the LV2 world many
 plugin authors write their own widget sets with their distinct look and feel as
 they are part of the authors corporate identity.
 
+
 ## Status
 
 Kind of beta testing stage. Currently only tested on Linux/X11
 
+### API stability
 
-## How to use
+Before reaching the 1.0.0 release, incompatible API changes can happen. There
+is no large base of applications using `pugl-ui` as of yet. So experience with
+the API is limited. The 1.0.0 release will not happen before several developers
+have used `pugl-ui` for real life applications and given feedback.
 
-This is not a crate distributed on https://crates.io, yet. There's still some
-manual work to do to use and test it.
+If it turns out that there is a better way to design the API it will be
+done. It is somewhat likely, that the API will change towards more convenient
+use, as more practical experience is collected.
 
-### Prerequisites
-
-Clone and build the crate [pugl-sys](https://github.com/johannes-mueller/pugl-sys) next
-to where you cloned this one to.
-
-
-### Build
-
-* Run `cargo build`
-
-* Run `cargo test`. A funny looking window should appear.
-
-* There is one example "app" that you can call by `cargo run
-  --example=widgets`. It's three dial nobs that you can turn by the mouse
-  wheel. By clicking "Reset" they go back to their original position.
-
+Especially because the API differs from usual object oriented approaches of GUI
+programming. The design patterns used in object oriented GUI programming, most
+prominently the observer pattern and model view controller, don't work in
+proper safe Rust, as shared mutable references are needed to implement them.
 
 ## Todo
 
-* Documentation
+* Better documentation
 
 However I am reluctant to put too much effort into documenting when the API is
 not stable. So first I will write some LV2 Plugins to see if everything works
 convenient.
+
+
+## Applications using `pugl-ui`
+
+* [Envolvigo](https://github.com/johannes-mueller/envolvigo)

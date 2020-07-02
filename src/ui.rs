@@ -1,5 +1,4 @@
-//#![feature(get_type_id)]
-
+//!
 use std::collections::{VecDeque,HashMap};
 
 use pugl_sys::pugl::*;
@@ -8,12 +7,14 @@ use crate::layout::*;
 use crate::layout_impl::*;
 use crate::widget::*;
 
+/// Used to indicate if an event has been processed
 pub enum EventState {
     Processed,
     NotProcessed
 }
 
 impl EventState {
+    /// Returns `Some(ev)` if the `EventState` is `NotProcessed`, otherwise `None`
     pub fn pass_event (&self, ev: Event) -> Option<Event> {
         match self {
             EventState::Processed => None,
@@ -22,7 +23,7 @@ impl EventState {
     }
 }
 
-//#[derive(Debug)]
+/// A node in the widget tree
 pub struct WidgetNode {
     pub(crate) id: Id,
     layouter: Option<Box<dyn LayouterImpl>>,
@@ -38,7 +39,7 @@ impl WidgetNode {
         }
     }
 
-    pub fn set_layouter(&mut self, layouter: Box<dyn LayouterImpl>) {
+    fn set_layouter(&mut self, layouter: Box<dyn LayouterImpl>) {
         self.layouter = Some(layouter);
     }
 
@@ -134,7 +135,53 @@ impl WidgetNode {
     }
 }
 
-
+/// The central interface between application, widgets and the windowing system
+///
+/// The `UI` has the following responsibilities.
+///
+/// * retain references to the widgets
+///
+/// * receive events from the windowing system and pass them to the relevant widgets
+///
+/// * lend widgets to the application, so the application can check
+///   the state of the widgets.
+///
+/// * supervise widget layouting
+///
+/// # Event propagation
+///
+/// The `UI` receives events from the windowing system. Depending on
+/// the context (mouse cursor position, kind of event, focused widget,
+/// ...) the UI passes the event to the widget that should receive the
+/// event. If that widget does not processes the event, the event can
+/// then be passed to another widget, usually the parent of the
+/// widget. This is done by the following rules.
+///
+/// ## Keyboard events
+///
+/// Keyboard events are first passed to the root widget, i.e. the
+/// widget that has been passed to the constructor of the `UI`.
+///
+/// If the root widget does not process the event, the event is passed
+/// to the focused widget. There are the methods
+/// [`focus_widget()`](#method.focus_widget) and
+/// [`focus_next_widget()`](#method.focus_next_widget) to set the
+/// focus to a specific widget.
+///
+///
+/// ## Mouse events
+///
+/// A mouse events goes to the widget that is under the mouse
+/// pointer. Widgets are kept in a tree of
+/// [`WidgetNode`](struct.WidgetNode.html)s. If the widget under the
+/// pointer does not process the event, it is passed to its parent.
+///
+/// ## Exeption: mouse dragging
+///
+/// When a mouse dragging is ongoing, the widget in which the mouse
+/// dragging started, receives, mouse events and key events first,
+/// until the dragging stops.
+///
 pub struct UI<RW: Widget + 'static> {
     widgets: Vec<Box<dyn Widget>>,
     root_widget: WidgetNode,
@@ -151,6 +198,11 @@ pub struct UI<RW: Widget + 'static> {
 }
 
 impl<RW: Widget + 'static> UI<RW> {
+    /// Creates a new `UI` instance from a `PuglViewFFI` and a heap allocated root widget
+    ///
+    /// The UI instance needs a `PuglViewFFI` instance from the
+    /// [`pugl-sys`](https://docs.rs/pugl-sys) crate as interface to
+    /// the windowing system.
     pub fn new(view: PuglViewFFI, root_widget: Box<RW>) -> UI<RW> {
         let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0));
         UI {
@@ -173,12 +225,22 @@ impl<RW: Widget + 'static> UI<RW> {
         }
     }
 
+    /// Creates a new `UI` which is scaled by the `scale_factor`
+    ///
+    /// Widgets don't know about the scale factor. They can do their
+    /// drawing and event processing as if the `scale_factor` was
+    /// `1.0`. The `UI` everything including the `cairo::Context`
+    /// transparently.
     pub fn new_scaled(view: PuglViewFFI, root_widget: Box<RW>, scale_factor: f64) -> UI<RW> {
         let mut ui = UI::new(view, root_widget);
         ui.scale_factor = scale_factor;
         ui
     }
 
+    /// Registers a new widget in the `UI`.
+    ///
+    /// The instance of the widget must be passed heap allocated in a `Box`.
+    /// Returns a `WidgetHandle` to the widget.
     pub fn new_widget<W: Widget>(&mut self, widget: Box<W>) -> WidgetHandle<W> {
         let id = self.widgets.len();
         self.widgets.push(widget);
@@ -187,29 +249,32 @@ impl<RW: Widget + 'static> UI<RW> {
         WidgetHandle::<W>::new(id)
     }
 
+    /// Creates a new `LayoutingWidget` for a `Layouter` of type `L` and registers it to the UI/
+    ///
+    /// Returns a `LayoutWidgetHandle to the `Layouter` object.
     pub fn new_layouter<L>(&mut self) -> LayoutWidgetHandle<L, LayoutWidget>
     where L: Layouter {
         let lw = self.new_widget(Box::new(LayoutWidget::default()));
         self.set_layouter::<L>(lw)
     }
 
-    pub fn set_layouter<L>(&mut self, lw: WidgetHandle<LayoutWidget>) -> LayoutWidgetHandle<L, LayoutWidget>
+    fn set_layouter<L>(&mut self, lw: WidgetHandle<LayoutWidget>) -> LayoutWidgetHandle<L, LayoutWidget>
     where L: Layouter {
         self.find_node(lw.id()).set_layouter(L::new_implementor());
         LayoutWidgetHandle::<L, LayoutWidget>::new(lw)
     }
 
+    /// Adds a spacing widget to a layouter.
+    ///
+    /// This is a convenience function
     pub fn add_spacer<L>(&mut self, parent: LayoutWidgetHandle<L, LayoutWidget>, target: L::Target)
     where L: Layouter {
         let sp = self.new_widget(Box::new(Spacer::default()));
         self.pack_to_layout(sp, parent, target);
     }
 
-    pub fn layouter_handle<L, W>(&mut self, layouter: LayoutWidgetHandle<L, W>) -> &mut L::Implementor
-    where L: Layouter, W: Widget {
-        self.find_node(layouter.widget().id()).layouter_impl::<L>()
-    }
-
+    /// Adds the `widget` to a `layout` according to the layout
+    /// `target`. The `target` is specific to the actual `Layouter` type `L`
     pub fn pack_to_layout<L, W, PW>(&mut self, widget: WidgetHandle<W>, parent: LayoutWidgetHandle<L, PW>, target: L::Target)
     where L: Layouter,
           W: Widget,
@@ -227,6 +292,11 @@ impl<RW: Widget + 'static> UI<RW> {
         node.pack(id, parent, target);
     }
 
+    /// Performs the layouting of the widgets.
+    ///
+    /// This must be done before the view is realized (or window is
+    /// shown). All registered widgets should have been packed to a
+    /// layout before.
     pub fn do_layout(&mut self) {
         if !self.unlayouted_nodes.is_empty() {
             eprintln!("WARNING: Rendering layout with {} unlayouted widgets!", self.unlayouted_nodes.len());
@@ -249,6 +319,7 @@ impl<RW: Widget + 'static> UI<RW> {
         self.widgets[0].set_layout(&Layout { pos: Default::default(), size: new_size });
     }
 
+    /// Sets the default window size, so that the widget layout fits into it.
     pub fn fit_window_size(&self) {
         let size = self.widgets[0].size().scale(self.scale_factor);
         if size.h * size.w == 0.0 {
@@ -257,6 +328,7 @@ impl<RW: Widget + 'static> UI<RW> {
         self.set_default_size(size.w as i32, size.h as i32);
     }
 
+    /// Sets the minimal window size, so that the widget layout fits into it.
     pub fn fit_window_min_size(&self) {
         let size = self.widgets[0].size().scale(self.scale_factor);
         if size.h * size.w == 0.0 {
@@ -265,23 +337,48 @@ impl<RW: Widget + 'static> UI<RW> {
         self.set_min_size(size.w as i32, size.h as i32);
     }
 
+    /// Returns `true` iff a the window has been requested to close by the windowing system
+    ///
+    /// The application should check for this at every cycle of the
+    /// event loop and terminate the event loop if `true` is returned.
     pub fn close_request_issued(&self) -> bool {
         self.close_request_issued
     }
 
+    /// Returns a mutable reference to the `Layouter` of the passed `LayoutWidgetHandle`.
+    ///
+    /// This can be used to borrow a handle to the layouter in order
+    /// to change layouting parameters.
+    pub fn layouter<L, W>(&mut self, layouter: LayoutWidgetHandle<L, W>) -> &mut L::Implementor
+    where L: Layouter, W: Widget {
+        self.find_node(layouter.widget().id()).layouter_impl::<L>()
+    }
+
+    /// Returns a mutable reference to the `Layouter` of root Layouter.
+    ///
+    /// This can be used to borrow a handle to the layouter in order
+    /// to change layouting parameters.
     pub fn root_layout(&self) -> LayoutWidgetHandle<VerticalLayouter, RW> {
         self.root_widget_handle
     }
 
+    /// Returns a mutable reference to the root widget.
     pub fn root_widget(&mut self) -> &mut RW {
         self.widgets[0].downcast_mut::<RW>().expect("Root Widget cast failed")
     }
 
+    /// Returns a mutable reference to the specified by `widget`.
+    ///
+    /// It returns a reference to the actual widget instance, so type specific
+    /// methods of the widget can be used.
     pub fn widget<W: Widget>(&mut self, widget: WidgetHandle<W>) -> &mut W {
         self.widgets[widget.id()].downcast_mut::<W>().expect("Widget cast failed!")
     }
 
-    pub fn focus_next_widget (&mut self) {
+    /// Performs a step in the cycle of the widget focus.
+    ///
+    /// Can be called when the root widget received a TAB key press event.
+    pub fn focus_next_widget(&mut self) {
         let mut fw = self.focused_widget;
         loop {
             fw += 1;
@@ -298,14 +395,45 @@ impl<RW: Widget + 'static> UI<RW> {
         self.widgets[self.focused_widget].set_focus(true);
     }
 
+    /// Focuses the widget specified by `widget`
+    ///
+    pub fn focus_widget<W: Widget>(&mut self, widget: WidgetHandle<W>) {
+        let id = widget.id();
+        if self.widgets[id].takes_focus() {
+            self.widgets[self.focused_widget].set_focus(false);
+            self.focused_widget = id;
+            self.widgets[id].set_focus(true);
+        }
+    }
+
+    /// Returns `true` iff the window has the focus.
     pub fn has_focus(&self) -> bool {
         self.have_focus
     }
 
+    /// Initiates the next cycle of the event loop
+    ///
+    /// The application should call it at the beginning of the event loop.
+    ///
+    /// From `pugl` documentation:
+    /// If `timeout` is zero, then this function will not block. Plugins
+    /// should always use a timeout of zero to avoid blocking the
+    /// host.
+    ///
+    /// If a positive `timeout` is given, then events will be processed
+    /// for that amount of time, starting from when this function was
+    /// called.
+    ///
+    /// If a `negative` timeout is given, this function will block
+    /// indefinitely until an event occurs.
+    ///
+    /// For continuously animating programs, a timeout that is a
+    /// reasonable fraction of the ideal frame period should be used,
+    /// to minimize input latency by ensuring that as many input
+    /// events are consumed as possible before drawing.
     pub fn next_event(&mut self, timeout: f64) {
         for id in 0..self.widgets.len() {
-            let w = &mut self.widgets[id];
-            if w.needs_repaint() {
+            let w = &mut self.widgets[id]; if w.needs_repaint() {
                 let pos = w.pos().scale(self.scale_factor);
                 let size = w.size().scale(self.scale_factor);
                 self.post_redisplay_rect(pos, size);

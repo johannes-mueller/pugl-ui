@@ -4,7 +4,9 @@ use downcast_rs::DowncastSync;
 
 use pugl_sys::pugl::*;
 
-/// The unique Id of a widget
+/// The unique Id of a widget.
+///
+/// The Id is the way, widgets can be accessed by a [`WidgetHandle`](struct.WidgetHandle.html).
 pub type Id = usize;
 
 /// The `Widget` trait.
@@ -146,11 +148,23 @@ pub trait Widget : DowncastSync {
     /// `let (left, right, top, bottom, width, height) = self.geometry();`
     ///
     fn geometry(&self) -> (f64, f64, f64, f64, f64, f64) {
+        let (x, y, w, h) = self.rect();
+        (x, x+w, y, y+h, w, h)
+    }
+
+    /// Returns four scalar values to conveniently describe the widget's rectangle
+    /// (x, y, width, height)
+    ///
+    /// Usually not to be reimplemented
+    ///
+    /// Useful in implementations of `::exposed()` when used as
+    /// `let (x, y, w, h) = self.rect();`
+    fn rect(&self) -> (f64, f64, f64, f64) {
         let x = self.pos().x;
         let y = self.pos().y;
         let w = self.size().w;
         let h = self.size().h;
-        (x, x+w, y, y+h, w, h)
+        (x, y, w, h)
     }
 
     /// Returns true iff the widget has a defined minimum width
@@ -363,7 +377,16 @@ impl WidgetStub {
 
 /// A handle of a widget.
 ///
-/// Contains the Id of the widget and a `PhantomData` of its actual type.
+/// Contains the Id of the widget and a `PhantomData` of its actual
+/// type.  When a widget of type `<T: Widget>` is registered in the
+/// `UI` by [`UI::new_widget()`](../ui/struct.UI.html#method.new_widget)
+/// an object `WidgetHandle<T>` is returned. As it contains only the
+/// Id of the widget, it is copyable.
+///
+/// The widget itself can then be borrowed from the `UI` using
+/// [`UI::widget<T: Widget>()`](../ui/struct.UI.html#method.widget),
+/// which takes a generic `WidgetHandle` as an argument. So it can
+/// deduce and downcast the widget to the actual `T`.
 pub struct WidgetHandle<W: Widget> {
     id: Id,
     widget_type: PhantomData<W>
@@ -381,9 +404,6 @@ impl<W: Widget> Clone for WidgetHandle<W> {
 }
 
 impl<W: Widget> WidgetHandle<W> {
-    /// Creates a new widget handle for the widget with the Id `id`.
-    ///
-    /// Called by UI.
     pub(crate) fn new(id: Id) -> Self {
         WidgetHandle::<W> {
             id,
@@ -391,7 +411,7 @@ impl<W: Widget> WidgetHandle<W> {
         }
     }
 
-    pub fn id(&self) -> Id { self.id }
+    pub(crate) fn id(&self) -> Id { self.id }
 }
 
 #[macro_export]
