@@ -49,6 +49,8 @@ impl EventState {
 }
 
 /// A node in the widget tree (internal use only)
+///
+/// See ['layout'](../layout/index.html) for principles about widget layouting.
 pub struct WidgetNode {
     pub(crate) id: Id,
     layouter: Option<Box<dyn LayouterImpl>>,

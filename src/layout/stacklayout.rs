@@ -1,13 +1,4 @@
-//! A module for widget layouting. So far there is the classical box
-//! stacking layout (like Gtk's HBox/Vbox) implemented. Other
-//! layouting algorithms can be implemented later.
-//!
-//! This module contains the items, that are needed to layout
-//! widgets.
-//!
-//! # Usage
-//!
-
+//! Stack layouting like Gtk's VBox/HBox
 use std::collections::VecDeque;
 
 use pugl_sys::*;
@@ -134,7 +125,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
                 if widget.height_expandable() {
                     widget.set_height(height_avail);
                 }
-                widget.set_pos (&pos);
+                widget.set_pos(&pos);
                 (widget.size().w, widget.sized_width())
             };
             children[*sn].apply_sizes(widgets, pos);

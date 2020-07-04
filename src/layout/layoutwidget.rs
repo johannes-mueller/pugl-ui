@@ -1,3 +1,4 @@
+//! The widget that contains a layout
 
 use crate::layout;
 use crate::widget;
