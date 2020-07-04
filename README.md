@@ -44,11 +44,12 @@ proper safe Rust, as shared mutable references are needed to implement them.
 
 ## Todo
 
-* Better documentation
+* More complete documentation
 
 However I am reluctant to put too much effort into documenting when the API is
 not stable. So first I will write some LV2 Plugins to see if everything works
-convenient.
+convenient. So if there is documentation missing to a certain module, chances
+are, that the API will change.
 
 
 ## Applications using `pugl-ui`

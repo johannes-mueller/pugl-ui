@@ -116,7 +116,7 @@ impl WidgetNode {
         let size_avail = widgets[self.id].size();
 
         if let Some(layouter) = &self.layouter {
-            layouter.apply_sizes(widgets, &self.children, orig_pos, size_avail);
+            layouter.apply_layouts(widgets, &self.children, orig_pos, size_avail);
         }
     }
 
@@ -132,7 +132,7 @@ impl WidgetNode {
         let size = self.layouter
             .as_ref()
             .expect("::calc_widget_sizes() no layouter found")
-            .calc_widget_sizes(widgets, &self.children);
+            .calc_size(widgets, &self.children);
 
         widgets[self.id].set_size(&size);
 

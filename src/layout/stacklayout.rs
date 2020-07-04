@@ -96,7 +96,7 @@ impl Default for HorizontalLayouterImpl {
 }
 
 impl LayouterImpl for HorizontalLayouterImpl {
-    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
+    fn apply_layouts(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
                    orig_pos: Coord, size_avail: Size) {
         let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
             if widgets[children[*sn].id].sized_width() {
@@ -138,7 +138,7 @@ impl LayouterImpl for HorizontalLayouterImpl {
         }
     }
 
-    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size {
+    fn calc_size(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size {
         let mut need = Size::default();
         need.w += self.d.padding;
         for subnode in self.d.subnodes.iter() {
@@ -201,7 +201,7 @@ impl Default for VerticalLayouterImpl {
 }
 
 impl LayouterImpl for VerticalLayouterImpl {
-    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
+    fn apply_layouts(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
                    orig_pos: Coord, size_avail: Size) {
         let sized_widgets = self.d.subnodes.iter().fold (0, | acc, sn | {
             if widgets[children[*sn].id].sized_height() {
@@ -243,7 +243,7 @@ impl LayouterImpl for VerticalLayouterImpl {
 
     }
 
-    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size {
+    fn calc_size(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size {
         let mut need = Size::default();
         need.h += self.d.padding;
         for subnode in self.d.subnodes.iter() {
