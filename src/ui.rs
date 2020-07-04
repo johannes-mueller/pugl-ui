@@ -28,7 +28,8 @@ use std::collections::{VecDeque,HashMap};
 use pugl_sys::pugl::*;
 
 use crate::layout::*;
-use crate::layout_impl::*;
+use crate::layout::layoutwidget::*;
+use crate::layout::stacklayout::*;
 use crate::widget::*;
 
 /// Used to indicate if an event has been processed

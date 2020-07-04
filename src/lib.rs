@@ -71,7 +71,7 @@
 //! ```
 //! use pugl_sys::*;
 //! use pugl_ui::ui::*;
-//! use pugl_ui::layout::*;
+//! use pugl_ui::layout::stacklayout::*;
 //! use pugl_ui::widget::*;
 //! use pugl_ui::*;
 //! use cairo;
@@ -187,11 +187,9 @@ extern crate downcast_rs;
 #[macro_use]
 pub mod widget;
 
-
 #[macro_use]
 pub mod ui;
 pub mod layout;
-pub mod layout_impl;
 
 #[macro_export]
 macro_rules! event_processed { () => (Some($crate::ui::EventState::Processed)) }
@@ -202,7 +200,7 @@ macro_rules! event_not_processed { () => (Some($crate::ui::EventState::NotProces
 mod tests {
     use pugl_sys::*;
     use crate::ui::*;
-    use crate::layout::*;
+    use crate::layout::stacklayout::*;
     use crate::widget::*;
     use cairo;
 

@@ -1,26 +1,57 @@
+//! A module for widget layouting. So far there is the classical box
+//! stacking layout (like Gtk's HBox/Vbox) implemented. Other
+//! layouting algorithms can be implemented later.
+//!
+//! This module contains the items, that are needed to layout
+//! widgets.
+//!
+//! # Usage
+//!
+
 use std::collections::VecDeque;
 
-use downcast_rs::DowncastSync;
+use pugl_sys::*;
 
-use pugl_sys::{Coord, Size};
-use crate::ui;
 use crate::layout::*;
+use crate::ui;
 use crate::widget::*;
 
+pub type Spacing = f64;
 
-pub trait LayouterImpl: DowncastSync {
-    fn apply_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
-                   orig_pos: Coord, available_size: Size);
-    fn calc_widget_sizes(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode]) -> Size;
+pub enum StackDirection {
+    Front,
+    Back
 }
-impl_downcast!(sync LayouterImpl);
 
-pub trait Layouter : Default + Clone + Copy {
-    type Target;
-    type Implementor: LayouterImpl;
-    fn new_implementor() -> Box<dyn LayouterImpl>;
-    fn pack(&mut self, layout_impl: &mut Self::Implementor, subnode_id: Id, target: Self::Target);
-    fn expandable() -> (bool, bool);
+#[derive(Clone, Copy, Default, Debug)]
+pub struct HorizontalLayouter;
+
+#[derive(Clone, Copy, Default, Debug)]
+pub struct VerticalLayouter;
+
+#[derive(Default)]
+pub struct Spacer {
+    stub: WidgetStub,
+    width_expandable: bool,
+    height_expandable: bool
+}
+
+impl Widget for Spacer {
+    fn stub (&self) -> &WidgetStub {
+        &self.stub
+    }
+    fn stub_mut (&mut self) -> &mut WidgetStub {
+        &mut self.stub
+    }
+    fn width_expandable(&self) -> bool { self.width_expandable }
+    fn height_expandable(&self) -> bool { self.height_expandable }
+}
+
+impl Spacer {
+    pub(crate) fn set_expandable(&mut self, (we, he): (bool, bool)) {
+        self.width_expandable = we;
+        self.height_expandable = he;
+    }
 }
 
 
@@ -256,82 +287,5 @@ impl Layouter for VerticalLayouter {
     }
     fn expandable() -> (bool, bool) {
         (false, true)
-    }
-}
-
-
-
-
-
-#[derive(Default)]
-pub struct LayoutWidget {
-    stub: WidgetStub,
-    width_expandable: bool,
-    height_expandable: bool,
-
-    width_locked: bool,
-    height_locked: bool,
-}
-
-impl LayoutWidget {
-    pub(crate) fn set_expandable(&mut self, we: bool, he: bool) {
-        self.width_expandable = we && !self.width_locked;
-        self.height_expandable = he && !self.height_locked;
-    }
-
-    pub fn lock_width(&mut self) {
-        self.width_locked = true;
-    }
-    pub fn lock_height(&mut self) {
-        self.height_locked = true;
-    }
-}
-
-impl Widget for LayoutWidget {
-    fn stub (&self) -> &WidgetStub {
-        &self.stub
-    }
-    fn stub_mut (&mut self) -> &mut WidgetStub {
-        &mut self.stub
-    }
-
-    fn width_expandable(&self) -> bool { self.width_expandable }
-    fn height_expandable(&self) -> bool { self.height_expandable }
-
-    fn sized_width(&self) -> bool { true }
-    fn sized_height(&self) -> bool { true }
-    fn pointer_enter_wrap(&mut self) {}
-    fn pointer_leave_wrap(&mut self) {}
-}
-
-
-pub struct LayoutWidgetHandle<L: Layouter, W: Widget> {
-    widget_handle: WidgetHandle<W>,
-    layouter: L
-}
-
-impl<L: Layouter, W: Widget> Clone for LayoutWidgetHandle<L, W> {
-    fn clone(&self) -> Self {
-        LayoutWidgetHandle::<L, W> {
-            widget_handle: self.widget_handle,
-            layouter: L::default()
-        }
-    }
-}
-
-impl<L: Layouter, W: Widget> Copy for LayoutWidgetHandle<L, W> { }
-
-impl<L: Layouter, W: Widget> LayoutWidgetHandle<L, W> {
-    pub fn new(widget_handle: WidgetHandle<W>) -> LayoutWidgetHandle<L, W> {
-        LayoutWidgetHandle { widget_handle, layouter: L::default() }
-    }
-    pub fn widget(&self) -> WidgetHandle<W> {
-        self.widget_handle
-    }
-    pub fn layouter(&mut self) -> &mut L {
-        &mut self.layouter
-    }
-    pub fn expandable() -> (bool, bool) {
-        L::expandable()
     }
 }

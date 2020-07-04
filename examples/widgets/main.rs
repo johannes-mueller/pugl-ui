@@ -8,7 +8,7 @@ mod button;
 mod dial;
 
 use pugl_ui::widget::*;
-use pugl_ui::layout::*;
+use pugl_ui::layout::stacklayout::*;
 use pugl_ui::ui::*;
 
 use pugl_sys::*;
