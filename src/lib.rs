@@ -44,18 +44,21 @@
 //!   if the application's state needs to be changed.
 //!
 //! * **The application** holds a reference to the UI and implements
-//!   the event loop. There is no trait nor struct for it in `pugl-ui`.
-//!   Typically its a function that initializes the UI and then has an
-//!   an event loop that asks the ui to propagate events from the
-//!   windowing system and then checks the widgets if any application
-//!   state change is required, for example when a button has been
-//!   clicked. So it is the application that holds all the application
-//!   logic.
+//!   the event loop. There is no trait nor struct for it in
+//!   `pugl-ui`.  Typically its a function that initializes the UI and
+//!   then has an event loop that asks the `UI` to propagate events
+//!   from the windowing system by calling
+//!   [`UI::next_event()`](ui/struct.UI.html#method.next_event) and
+//!   then checks the widgets if any application state change is
+//!   required, for example when a button has been clicked. So it is
+//!   the application that holds all the application logic. The
+//!   application can also borrow mutable references to widgets, for
+//!   example to change their state.
 //!
 //! ## Widget handles
 //!
 //! The application does not retain references to the widget. It is
-//! the UI that has them. The application retains only
+//! the `UI` that has them. The application retains only
 //! [`WidgetHandle`](widget/struct.WidgetHandle.html) objects. The
 //! `WidgetHandle` object are created by
 //! [`UI::new_widget()`](ui/struct.UI.html#method.new_widget) and can

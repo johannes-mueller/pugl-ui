@@ -1,6 +1,6 @@
-//! A module for widget layouting. So fare there is the classical box
+//! A module for widget layouting. So far there is the classical box
 //! stacking layout (like Gtk's HBox/Vbox) implemented. Other
-//! layouting algorithms can be implmented later.
+//! layouting algorithms can be implemented later.
 //!
 //! This module contains the items, that are needed to layout
 //! widgets.

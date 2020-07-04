@@ -1,4 +1,4 @@
-
+//! Everything to describe an access a widget
 use std::marker::PhantomData;
 use downcast_rs::DowncastSync;
 
@@ -16,8 +16,8 @@ pub type Id = usize;
 /// defined. Eeven layouts are internally treated as widgets.
 ///
 /// Data common to all widgets is kept in the struct
-/// [WidgetStub](struct.WidgetStub.html) accessible from the widget by
-/// the methods `stub()` and `stub_mut()`.
+/// [`WidgetStub`](struct.WidgetStub.html) accessible from the widget by
+/// the methods [`stub()`](#tymethod.stub) and [`stub_mut()`](#tymethod.stub_mut).
 pub trait Widget : DowncastSync {
 
     /// Called by the UI to pass an event to the widget.
@@ -27,9 +27,9 @@ pub trait Widget : DowncastSync {
     /// processed the event it shoud return `Some(ev)` so that the
     /// event can be passed to its parent widget.
     ///
-    /// There is [EventState](enum.EventState.html) and the macros
-    /// [event_processed!()](macro.event_processed.html) and
-    /// [event_not_processed!()](macro.event_not_processed.html) to do this.
+    /// There is [`EventState`](../ui/enum.EventState.html) and the macros
+    /// [`event_processed!()`](../macro.event_processed.html) and
+    /// [`event_not_processed!()`](../macro.event_not_processed.html) to do this.
     ///
     /// The default implementation just passes the event without touching it.
     ///
@@ -89,12 +89,12 @@ pub trait Widget : DowncastSync {
 
     /// Supposed to return a reference to the `WidgetStub` of the widget
     ///
-    /// usually implemented by the macro [widget_stub!()](macro.widget_stub.html).
+    /// usually implemented by the macro [`widget_stub!()`](../macro.widget_stub.html).
     fn stub (&self) -> &WidgetStub;
 
     /// Supposed to return a mutable reference to the `WidgetStub` of the widget.
     ///
-    /// Usually implemented by the macro [widget_stub!()](macro.widget_stub.html).
+    /// Usually implemented by the macro [`widget_stub!()`](../macro.widget_stub.html).
     fn stub_mut (&mut self) -> &mut WidgetStub;
 
     fn ask_for_repaint(&mut self)  {
@@ -414,6 +414,12 @@ impl<W: Widget> WidgetHandle<W> {
     pub(crate) fn id(&self) -> Id { self.id }
 }
 
+/// Implements [`Widget::stub()`](widget/trait.Widget.html#tymethod.stub)
+/// and [`Widget::stub_mut()`](widget/trait.Widget.html#tymethod.stub_mut)
+///
+/// Assumes that the trait object implementing
+/// [`Widget`](widget/trait.Widget.html) has an instance of
+/// [`WidgetStub`](widget/struct.WidgetStub.html) in a field `stub`.
 #[macro_export]
 macro_rules! widget_stub {
     () => {

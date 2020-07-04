@@ -1,3 +1,27 @@
+//! The `UI` struct and widget management facilities
+//!
+//! # Principles
+//!
+//! Widgets are kept in a `Vec<dyn Box<Widget>`. To address an
+//! individual widget unambiguously the widgets [`ID`](type.Id.html)
+//! is used which directly corresponds to the index of the widget in
+//! the `Vec`.
+//!
+//! Moreover widgets are kept in a hierarchical tree. So each widget,
+//! except for the root widget with the `ID` 0 has exactly one parent
+//! widget. As of now a widget's geometry is a subset of the parent's
+//! geometry. This limitation implicates that for widgets that need to
+//! overlay other widgets, like drop down widgets, a new mechanism
+//! needs to be implemented, like floating widgets.
+//!
+//! The widget hierachy tree is used to perform two things.
+//!
+//! * Perform the widget layouting. Each widget is responsible to
+//!   layout its children.
+//!
+//! * Event propagation. The `UI` finds the widget that recieves the
+//!   event, if the widget does not process the event, the event is
+//!   propagated to its parent.
 //!
 use std::collections::{VecDeque,HashMap};
 
@@ -23,7 +47,7 @@ impl EventState {
     }
 }
 
-/// A node in the widget tree
+/// A node in the widget tree (internal use only)
 pub struct WidgetNode {
     pub(crate) id: Id,
     layouter: Option<Box<dyn LayouterImpl>>,
