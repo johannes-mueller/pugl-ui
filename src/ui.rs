@@ -577,6 +577,13 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
                 self.widgets[*id].pointer_enter_wrap();
                 self.widget_under_pointer = *id;
             }
+            if ev.data == EventType::PointerIn {
+                self.widgets[*id].pointer_enter_wrap();
+                self.widget_under_pointer = *id;
+            }
+            if ev.data == EventType::PointerOut {
+                self.widgets[self.widget_under_pointer].pointer_leave_wrap();
+            }
         }
 
         while let Some(id) = event_path.pop_back() {

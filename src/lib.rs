@@ -1009,6 +1009,48 @@ mod tests {
         assert!(ui.widget(widget_2).is_hovered());
     }
 
+    #[cfg(feature = "testing")]
+    #[test]
+    fn hover_pointer_enter_leave_window() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let enter_event = Event {
+            data: EventType::PointerIn,
+            context: EventContext { pos: Coord{ x: 21., y: 13. }, ..Default::default() }
+        };
+        let leave_event = Event {
+            data: EventType::PointerOut,
+            context: EventContext { pos: Coord{ x: 21., y: 13. }, ..Default::default() }
+        };
+
+        view.queue_event(enter_event);
+        view.queue_event(leave_event);
+
+        let widget_size = Size { w: 42., h: 23. };
+
+        let ui = view.handle();
+        let widget = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size,
+            ..Default::default()
+        }));
+
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+        ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+        ui.do_layout();
+        ui.fit_window_size();
+        ui.fit_window_min_size();
+        ui.show_window();
+
+        assert!(!ui.widget(widget).is_hovered());
+        ui.update(-1.0);
+        assert!(ui.widget(widget).is_hovered());
+        ui.update(-1.0);
+        assert!(!ui.widget(widget).is_hovered());
+    }
+
+
+
     #[cfg(all(not(feature = "testing"), test))]
     #[test]
     fn make_window() {
