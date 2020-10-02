@@ -25,7 +25,7 @@
 //!
 use std::collections::{VecDeque,HashMap};
 
-use pugl_sys::pugl::*;
+use pugl_sys::*;
 
 use crate::layout::*;
 use crate::layout::layoutwidget::*;

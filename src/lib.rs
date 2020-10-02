@@ -243,6 +243,7 @@ mod tests {
         pub fn wants_quit(&self) -> bool {
             self.wants_quit
         }
+        #[cfg(not(feature = "testing"))]
         pub fn focus_next(&mut self) -> bool {
             let f = self.focus_next;
             self.focus_next = false;
@@ -369,6 +370,10 @@ mod tests {
 
         fn takes_focus(&self) -> bool { true }
 
+        fn pointer_enter(&mut self) {
+            println!("pointer enter {}", self.name);
+        }
+
         fn pointer_leave(&mut self) {
             println!("pointer leave {}", self.name);
         }
@@ -385,7 +390,626 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "testing")]
+    #[test]
+    fn root_widget_quit_event() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.5));
 
+        view.queue_event(Event {
+            data: EventType::KeyPress(Key {
+                key: KeyVal::Character('q'),
+                modifiers: 0,
+                code: 0
+            }),
+            context: EventContext::default()
+        });
+
+        let ui = view.handle();
+        assert!(!ui.root_widget().wants_quit());
+        ui.update(-1.0);
+        assert!(ui.root_widget().wants_quit());
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_single_widget() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let expected_size = Size { w: 42., h: 23. };
+        {
+            let ui = view.handle();
+            let widget = ui.new_widget(Box::new(RectWidget {
+                min_size: expected_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+            ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget).pos(), Coord::default());
+            assert_eq!(ui.get_frame().size, expected_size);
+
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_single_widget_padding() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let expected_size = Size { w: 52., h: 33. };
+        {
+            let ui = view.handle();
+            let widget = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(5.).set_spacing(10.);
+            ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget).pos(), Coord { x: 5.0, y: 5.0 });
+            assert_eq!(ui.get_frame().size, expected_size);
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_single_widget_scaled() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 2.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let expected_size = Size { w: 84., h: 46. };
+        {
+            let ui = view.handle();
+            let widget = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+            ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget).pos(), Coord::default());
+            assert_eq!(ui.get_frame().size, expected_size);
+
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_single_widget_padding_scaled() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 2.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let expected_size = Size { w: 104., h: 66. };
+        {
+            let ui = view.handle();
+            let widget = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(5.).set_spacing(10.);
+            ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget).pos(), Coord { x: 5.0, y: 5.0 });
+            assert_eq!(ui.get_frame().size, expected_size);
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    #[should_panic(expected = "Root window size zero. Have you forgotten ui::UI::do_layout()?")]
+    fn layout_single_widget_no_layout_window_size() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let expected_size = Size { w: 42., h: 23. };
+        let ui = view.handle();
+        let widget = ui.new_widget(Box::new(RectWidget {
+            min_size: expected_size,
+            ..Default::default()
+        }));
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+        ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+        ui.fit_window_size();
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    #[should_panic(expected = "Minimal root size zero. Have you forgotten ui::UI::do_layout()?")]
+    fn layout_single_widget_no_layout_min_size() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let expected_size = Size { w: 42., h: 23. };
+        let ui = view.handle();
+        let widget = ui.new_widget(Box::new(RectWidget {
+            min_size: expected_size,
+            ..Default::default()
+        }));
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+        ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+        ui.fit_window_min_size();
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    #[should_panic(expected = "widget already layouted?")]
+    fn layout_same_widget_twice() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let expected_size = Size { w: 42., h: 23. };
+        {
+            let ui = view.handle();
+            let widget = ui.new_widget(Box::new(RectWidget {
+                min_size: expected_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+            ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget, ui.root_layout(), StackDirection::Front);
+        }
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_two_widgets() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let expected_size = Size { w: 42., h: 46. };
+        {
+            let ui = view.handle();
+            let widget_1 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            let widget_2 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+            ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget_1).pos(), Coord { x: 0.0, y: 23.0 });
+            assert_eq!(ui.widget(widget_2).pos(), Coord::default());
+
+            assert_eq!(ui.get_frame().size, expected_size);
+
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_two_widgets_spacing() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let expected_size = Size { w: 42., h: 56. };
+        {
+            let ui = view.handle();
+            let widget_1 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            let widget_2 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(10.);
+            ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget_1).pos(), Coord { x: 0.0, y: 33.0 });
+            assert_eq!(ui.widget(widget_2).pos(), Coord::default());
+
+            assert_eq!(ui.widget(widget_1).size(), widget_size);
+            assert_eq!(ui.widget(widget_2).size(), widget_size);
+
+            assert_eq!(ui.get_frame().size, expected_size);
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_two_widgets_scaled() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 2.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let expected_size = Size { w: 84., h: 92. };
+        {
+            let ui = view.handle();
+            let widget_1 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            let widget_2 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+            ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget_1).pos(), Coord { x: 0.0, y: 23.0 });
+            assert_eq!(ui.widget(widget_2).pos(), Coord::default());
+
+            assert_eq!(ui.widget(widget_1).size(), widget_size);
+            assert_eq!(ui.widget(widget_2).size(), widget_size);
+
+            assert_eq!(ui.get_frame().size, expected_size);
+
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_two_widgets_spacing_scaled() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 2.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let expected_size = Size { w: 84., h: 112. };
+        {
+            let ui = view.handle();
+            let widget_1 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            let widget_2 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(10.);
+            ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            assert_eq!(ui.widget(widget_1).pos(), Coord { x: 0.0, y: 33.0 });
+            assert_eq!(ui.widget(widget_2).pos(), Coord::default());
+
+            assert_eq!(ui.get_frame().size, expected_size);
+
+        }
+        assert_eq!(view.mock_instance().min_size(), expected_size);
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn layout_single_layout_resize() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_size = Size { w: 42., h: 23. };
+        let (widget_1, widget_2, widget_3, widget_4) = {
+            let ui = view.handle();
+            let widget_1 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                ..Default::default()
+            }));
+            let widget_2 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                width_expandable: true,
+                ..Default::default()
+            }));
+            let widget_3 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                height_expandable: true,
+                ..Default::default()
+            }));
+            let widget_4 = ui.new_widget(Box::new(RectWidget {
+                min_size: widget_size,
+                width_expandable: true,
+                height_expandable: true,
+                ..Default::default()
+            }));
+            ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+            ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget_3, ui.root_layout(), StackDirection::Front);
+            ui.pack_to_layout(widget_4, ui.root_layout(), StackDirection::Front);
+            ui.do_layout();
+            ui.fit_window_size();
+            ui.make_resizable();
+            ui.fit_window_min_size();
+            ui.show_window();
+
+            (widget_1, widget_2, widget_3, widget_4)
+        };
+
+        assert_eq!(view.handle().widget(widget_1).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_2).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_3).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_4).size(), Size { w: 42., h: 23. });
+
+        view.fake_resize(Size { w: 42., h: 102. });
+
+        assert_eq!(view.handle().widget(widget_1).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_2).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_3).size(), Size { w: 42., h: 28. });
+        assert_eq!(view.handle().widget(widget_4).size(), Size { w: 42., h: 28. });
+
+        view.fake_resize(Size { w: 42., h: 1. });
+
+        assert_eq!(view.handle().widget(widget_1).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_2).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_3).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_4).size(), Size { w: 42., h: 23. });
+
+        view.fake_resize(Size { w: 50., h: 92. });
+
+        assert_eq!(view.handle().widget(widget_1).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_2).size(), Size { w: 50., h: 23. });
+        assert_eq!(view.handle().widget(widget_3).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_4).size(), Size { w: 50., h: 23. });
+
+        view.fake_resize(Size { w: 1., h: 1. });
+
+        assert_eq!(view.handle().widget(widget_1).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_2).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_3).size(), Size { w: 42., h: 23. });
+        assert_eq!(view.handle().widget(widget_4).size(), Size { w: 42., h: 23. });
+
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn two_widgets_clicks() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_size = Size { w: 42., h: 23. };
+
+        view.queue_event(Event {
+            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: 0 }),
+            context: EventContext { pos: Coord{ x: 21., y: 11.5 }, ..Default::default() }
+        });
+
+        view.queue_event(Event {
+            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: 0 }),
+            context: EventContext { pos: Coord{ x: 21., y: 28. }, ..Default::default() }
+        });
+
+        view.queue_event(Event {
+            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: 0 }),
+            context: EventContext { pos: Coord{ x: 21., y: 46. }, ..Default::default() }
+        });
+
+        let ui = view.handle();
+        let widget_1 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size,
+            ..Default::default()
+        }));
+        let widget_2 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size,
+            ..Default::default()
+        }));
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(10.);
+        ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+        ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+        ui.do_layout();
+        ui.fit_window_size();
+        ui.fit_window_min_size();
+        ui.show_window();
+
+        assert!(!ui.widget(widget_1).clicked());
+        assert!(!ui.widget(widget_2).clicked());
+
+        ui.update(-1.0);
+        assert!(!ui.widget(widget_1).clicked());
+        assert!(ui.widget(widget_2).clicked());
+
+        ui.update(-1.0);
+        assert!(!ui.widget(widget_1).clicked());
+        assert!(!ui.widget(widget_2).clicked());
+
+        ui.update(-1.0);
+        assert!(ui.widget(widget_1).clicked());
+        assert!(!ui.widget(widget_2).clicked());
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn focus_two_widgets() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_size = Size { w: 42., h: 23. };
+
+        let ui = view.handle();
+        let widget_1 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size,
+            ..Default::default()
+        }));
+        let widget_2 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size,
+            ..Default::default()
+        }));
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+        ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+        ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+        ui.do_layout();
+        ui.fit_window_size();
+        ui.fit_window_min_size();
+        ui.show_window();
+
+        assert!(!ui.widget(widget_1).has_focus());
+        assert!(!ui.widget(widget_2).has_focus());
+
+        ui.focus_next_widget();
+
+        assert!(ui.widget(widget_1).has_focus());
+        assert!(!ui.widget(widget_2).has_focus());
+
+        ui.focus_next_widget();
+
+        assert!(!ui.widget(widget_1).has_focus());
+        assert!(ui.widget(widget_2).has_focus());
+
+        ui.focus_next_widget();
+
+        assert!(ui.widget(widget_1).has_focus());
+        assert!(!ui.widget(widget_2).has_focus());
+    }
+
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn test_focus() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        assert!(!view.handle().has_focus());
+        view.fake_focus_in();
+        assert!(view.handle().has_focus());
+        view.fake_focus_out();
+        assert!(!view.handle().has_focus());
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn two_widgets_focus() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let space_event = Event {
+            data: EventType::KeyRelease(Key { key: KeyVal::Character(' '), modifiers: 0, code: 0 }),
+            context: EventContext::default()
+        };
+
+        view.queue_event(space_event);
+        view.queue_event(space_event);
+        view.queue_event(space_event);
+
+        let ui = view.handle();
+        let widget_1 = ui.new_widget(Box::new(RectWidget::default()));
+        let widget_2 = ui.new_widget(Box::new(RectWidget::default()));
+
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(10.);
+
+        assert!(!ui.widget(widget_1).clicked());
+        assert!(!ui.widget(widget_2).clicked());
+
+        ui.update(-1.0);
+        assert!(!ui.widget(widget_1).clicked());
+        assert!(!ui.widget(widget_2).clicked());
+
+        ui.focus_next_widget();
+        ui.update(-1.0);
+        assert!(ui.widget(widget_1).clicked());
+        assert!(!ui.widget(widget_2).clicked());
+
+        ui.focus_next_widget();
+        ui.update(-1.0);
+        assert!(!ui.widget(widget_1).clicked());
+        assert!(ui.widget(widget_2).clicked());
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
+    fn two_widgets_hover() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_1_hover_event = Event {
+            data: EventType::MouseMove(MotionContext::default()),
+            context: EventContext { pos: Coord{ x: 21., y: 11.5 }, ..Default::default() }
+        };
+        let widget_2_hover_event = Event {
+            data: EventType::MouseMove(MotionContext::default()),
+            context: EventContext { pos: Coord{ x: 21., y: 36. }, ..Default::default() }
+        };
+
+        view.queue_event(widget_1_hover_event);
+        view.queue_event(widget_2_hover_event);
+        view.queue_event(widget_1_hover_event);
+
+        let widget_size = Size { w: 42., h: 23. };
+
+        let ui = view.handle();
+        let widget_1 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size,
+            ..Default::default()
+        }));
+        let widget_2 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size,
+            ..Default::default()
+        }));
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+        ui.pack_to_layout(widget_1, ui.root_layout(), StackDirection::Front);
+        ui.pack_to_layout(widget_2, ui.root_layout(), StackDirection::Front);
+        ui.do_layout();
+        ui.fit_window_size();
+        ui.fit_window_min_size();
+        ui.show_window();
+
+        assert!(!ui.widget(widget_1).is_hovered());
+        assert!(!ui.widget(widget_2).is_hovered());
+
+        ui.update(1.0);
+
+        assert!(!ui.widget(widget_1).is_hovered());
+        assert!(ui.widget(widget_2).is_hovered());
+
+        ui.update(1.0);
+
+        assert!(ui.widget(widget_1).is_hovered());
+        assert!(!ui.widget(widget_2).is_hovered());
+
+        ui.update(1.0);
+
+        assert!(!ui.widget(widget_1).is_hovered());
+        assert!(ui.widget(widget_2).is_hovered());
+    }
+
+    #[cfg(all(not(feature = "testing"), test))]
     #[test]
     fn make_window() {
         let rw = Box::new(RootWidget::default());

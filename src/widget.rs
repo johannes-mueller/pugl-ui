@@ -2,7 +2,7 @@
 use std::marker::PhantomData;
 use downcast_rs::DowncastSync;
 
-use pugl_sys::pugl::*;
+use pugl_sys::*;
 
 /// The unique Id of a widget.
 ///
