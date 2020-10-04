@@ -265,7 +265,8 @@ mod tests {
 
         recently_clicked: bool,
 
-        clicked: bool
+        clicked: bool,
+        pointer_entered: bool
     }
 
     impl Widget for RectWidget {
@@ -371,10 +372,12 @@ mod tests {
         fn takes_focus(&self) -> bool { true }
 
         fn pointer_enter(&mut self) {
+            self.pointer_entered = true;
             println!("pointer enter {}", self.name);
         }
 
         fn pointer_leave(&mut self) {
+            self.pointer_entered = false;
             println!("pointer leave {}", self.name);
         }
     }
@@ -387,6 +390,10 @@ mod tests {
             let clicked = self.clicked;
             self.clicked = false;
             clicked
+        }
+
+        pub fn pointer_in(&self) -> bool {
+            self.pointer_entered
         }
     }
 
@@ -960,11 +967,11 @@ mod tests {
 
         let widget_1_hover_event = Event {
             data: EventType::MouseMove(MotionContext::default()),
-            context: EventContext { pos: Coord{ x: 21., y: 11.5 }, ..Default::default() }
+            context: EventContext { pos: Coord{ x: 21., y: 36. }, ..Default::default() }
         };
         let widget_2_hover_event = Event {
             data: EventType::MouseMove(MotionContext::default()),
-            context: EventContext { pos: Coord{ x: 21., y: 36. }, ..Default::default() }
+            context: EventContext { pos: Coord{ x: 21., y: 11.5 }, ..Default::default() }
         };
 
         view.queue_event(widget_1_hover_event);
@@ -991,22 +998,30 @@ mod tests {
         ui.show_window();
 
         assert!(!ui.widget(widget_1).is_hovered());
+        assert!(!ui.widget(widget_1).pointer_in());
         assert!(!ui.widget(widget_2).is_hovered());
-
-        ui.update(1.0);
-
-        assert!(!ui.widget(widget_1).is_hovered());
-        assert!(ui.widget(widget_2).is_hovered());
+        assert!(!ui.widget(widget_2).pointer_in());
 
         ui.update(1.0);
 
         assert!(ui.widget(widget_1).is_hovered());
+        assert!(ui.widget(widget_1).pointer_in());
         assert!(!ui.widget(widget_2).is_hovered());
+        assert!(!ui.widget(widget_2).pointer_in());
 
         ui.update(1.0);
 
         assert!(!ui.widget(widget_1).is_hovered());
+        assert!(!ui.widget(widget_1).pointer_in());
         assert!(ui.widget(widget_2).is_hovered());
+        assert!(ui.widget(widget_2).pointer_in());
+
+        ui.update(1.0);
+
+        assert!(ui.widget(widget_1).is_hovered());
+        assert!(ui.widget(widget_1).pointer_in());
+        assert!(!ui.widget(widget_2).is_hovered());
+        assert!(!ui.widget(widget_2).pointer_in());
     }
 
     #[cfg(feature = "testing")]
@@ -1043,10 +1058,13 @@ mod tests {
         ui.show_window();
 
         assert!(!ui.widget(widget).is_hovered());
+        assert!(!ui.widget(widget).pointer_in());
         ui.update(-1.0);
         assert!(ui.widget(widget).is_hovered());
+        assert!(ui.widget(widget).pointer_in());
         ui.update(-1.0);
         assert!(!ui.widget(widget).is_hovered());
+        assert!(!ui.widget(widget).pointer_in());
     }
 
 
