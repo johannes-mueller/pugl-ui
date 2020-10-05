@@ -70,11 +70,16 @@ impl WidgetNode {
         self.layouter = Some(layouter);
     }
 
-    fn search(&self, path: VecDeque<Id>, id: Id) -> (VecDeque<Id>, bool) {
+    /// Recursively completes the path to widget `id``
+    ///
+    /// The path is the way from `UI::root_widget` following by index
+    /// of `WidgetNode::children` Followed by `get_node_by_path()` it is
+    /// used to find the `WidgetNode` instance containing a certain
+    /// widget `Id`.
+    fn search(&self, mut path: VecDeque<usize>, id: Id) -> (VecDeque<usize>, bool) {
         if self.id == id {
             return (path, true);
         }
-        let mut path = path;
         for (i, c) in self.children.iter().enumerate() {
             path.push_back(i);
             let (p, found) = c.search(path, id);
@@ -87,11 +92,13 @@ impl WidgetNode {
         (path, false)
     }
 
-    fn get_node_by_path(&mut self, mut path: VecDeque<Id>) -> &mut WidgetNode {
-        let id = path.pop_front();
-        match id {
+    /// Recursively follows the path to the end finally returning the
+    /// final node. Takes a path set up by `search()`.
+    fn get_node_by_path(&mut self, mut path: VecDeque<usize>) -> &mut WidgetNode {
+        let index = path.pop_front();
+        match index {
             None => self,
-            Some(id) => self.children[id].get_node_by_path(path)
+            Some(i) => self.children[i].get_node_by_path(path)
         }
     }
 
@@ -485,7 +492,7 @@ impl<RW: Widget + 'static> UI<RW> {
         }
     }
 
-    fn event_path(&self, widget: &WidgetNode, pos: Coord, mut path: VecDeque<Id>) -> VecDeque<Id> {
+    fn event_path(&self, widget: &WidgetNode, pos: Coord, mut path: VecDeque<usize>) -> VecDeque<usize> {
         path.push_back(widget.id);
         for c in widget.children.iter() {
             if self.widgets[c.id].is_hit_by(pos) {

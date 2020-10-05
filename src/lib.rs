@@ -392,6 +392,7 @@ mod tests {
             clicked
         }
 
+        #[cfg(feature = "testing")]
         pub fn pointer_in(&self) -> bool {
             self.pointer_entered
         }

@@ -1,11 +1,10 @@
 //! Facilities for widget layouting
 //!
-//! So far there is the classical box
-//! stacking layout (like Gtk's HBox/Vbox) implemented. Other
-//! layouting algorithms can be implemented later.
+//! So far there is the classical box stacking layout (like Gtk's
+//! HBox/Vbox) implemented. Other layouting algorithms can be
+//! implemented later.
 //!
-//! This module contains the items, that are needed to layout
-//! widgets.
+//! This module contains the items, that are needed to layout widgets.
 //!
 //! # Principles
 //!
