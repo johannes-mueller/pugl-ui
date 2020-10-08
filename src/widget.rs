@@ -32,7 +32,22 @@ pub trait Widget : DowncastSync {
     /// [`event_not_processed!()`](../macro.event_not_processed.html) to do this.
     ///
     /// The default implementation just passes the event without touching it.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let ev = Event {
+    ///     data: EventType::MouseButtonPress(MouseButton { num: 1, modifiers: 0 }),
+    ///     context: Default::default()
+    /// };
+    /// let mut widget = DummyWidget::default();
     ///
+    /// assert_eq!(widget.event(ev), Some(ev));
+    /// # }
+    /// ```
     fn event(&mut self, ev: Event) -> Option<Event> {
         Some (ev)
     }
@@ -106,6 +121,18 @@ pub trait Widget : DowncastSync {
     /// called.
     ///
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// widget.request_reminder(5.0);
+    /// assert_eq!(widget.reminder_request(), Some(5.0));
+    /// # }
+    /// ```
     fn request_reminder(&mut self, timeout: f64) {
         self.stub_mut().reminder_request = Some(timeout);
     }
@@ -114,6 +141,20 @@ pub trait Widget : DowncastSync {
     ///
     /// Only to be called by the UI as it consumes the reminder request.
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// assert_eq!(widget.reminder_request(), None);
+    /// widget.request_reminder(5.0);
+    /// assert_eq!(widget.reminder_request(), Some(5.0));
+    /// assert_eq!(widget.reminder_request(), None);
+    /// # }
+    /// ```
     fn reminder_request(&mut self) -> Option<f64> {
         self.stub_mut().reminder_request.take()
     }
@@ -121,6 +162,21 @@ pub trait Widget : DowncastSync {
     /// Returns true iff the widget is currently focused.
     ///
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// assert!(!widget.has_focus());
+    /// widget.set_focus(true);
+    /// assert!(widget.has_focus());
+    /// widget.set_focus(false);
+    /// assert!(!widget.has_focus());
+    /// # }
+    /// ```
     fn has_focus (&self) -> bool {
         self.stub().has_focus
     }
@@ -128,6 +184,22 @@ pub trait Widget : DowncastSync {
     /// Returns the size of the widget after layouting.
     ///
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 23., y: 42. },
+    ///     size: Size { w: 137., h: 93. }
+    /// };
+    /// widget.set_layout(&layout);
+    /// assert_eq!(widget.size(), Size { w: 137., h: 93.});
+    /// # }
+    /// ```
     fn size (&self) -> Size {
         self.stub().layout.size
     }
@@ -135,6 +207,22 @@ pub trait Widget : DowncastSync {
     /// Returns the positon (upper left corner of the widget)
     ///
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 23., y: 42. },
+    ///     size: Size { w: 137., h: 93. }
+    /// };
+    /// widget.set_layout(&layout);
+    /// assert_eq!(widget.pos(), Coord { x: 23., y: 42. });
+    /// # }
+    /// ```
     fn pos (&self) -> Coord {
         self.stub().layout.pos
     }
@@ -146,7 +234,22 @@ pub trait Widget : DowncastSync {
     ///
     /// Useful in implementations of `::exposed()` when used as
     /// `let (left, right, top, bottom, width, height) = self.geometry();`
-    ///
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 23., y: 42. },
+    ///     size: Size { w: 137., h: 93. }
+    /// };
+    /// widget.set_layout(&layout);
+    /// assert_eq!(widget.geometry(), (23., 160., 42., 135., 137., 93.));
+    /// # }
+    /// ```
     fn geometry(&self) -> (f64, f64, f64, f64, f64, f64) {
         let (x, y, w, h) = self.rect();
         (x, x+w, y, y+h, w, h)
@@ -159,6 +262,22 @@ pub trait Widget : DowncastSync {
     ///
     /// Useful in implementations of `::exposed()` when used as
     /// `let (x, y, w, h) = self.rect();`
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 23., y: 42. },
+    ///     size: Size { w: 137., h: 93. }
+    /// };
+    /// widget.set_layout(&layout);
+    /// assert_eq!(widget.rect(), (23., 42., 137., 93.));
+    /// # }
+    /// ```
     fn rect(&self) -> (f64, f64, f64, f64) {
         let x = self.pos().x;
         let y = self.pos().y;
@@ -185,6 +304,18 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// widget.set_width(23.);
+    /// assert_eq!(widget.size().w, 23.);
+    /// # }
+    /// ```
     fn set_width (&mut self, width: f64) {
         self.stub_mut().layout.size.w = width;
     }
@@ -193,6 +324,18 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// widget.set_height(23.);
+    /// assert_eq!(widget.size().h, 23.);
+    /// # }
+    /// ```
     fn set_height (&mut self, height: f64) {
         self.stub_mut().layout.size.h = height;
     }
@@ -201,6 +344,19 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// widget.set_width(23.);
+    /// widget.expand_width(42.);
+    /// assert_eq!(widget.size().w, 65.);
+    /// # }
+    /// ```
     fn expand_width (&mut self, ammount: f64) {
         self.stub_mut().layout.size.w += ammount;
     }
@@ -209,6 +365,19 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// widget.set_height(23.);
+    /// widget.expand_height(42.);
+    /// assert_eq!(widget.size().h, 65.);
+    /// # }
+    /// ```
     fn expand_height (&mut self, ammount: f64) {
         self.stub_mut().layout.size.h += ammount;
     }
@@ -217,6 +386,18 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// widget.set_pos(&Coord { x: 23., y: 42. });
+    /// assert_eq!(widget.pos(), Coord { x: 23., y: 42. });
+    /// # }
+    /// ```
     fn set_pos (&mut self, pos: &Coord) {
         self.stub_mut().layout.pos = *pos;
     }
@@ -226,6 +407,18 @@ pub trait Widget : DowncastSync {
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// widget.set_size(&Size { w: 23., h: 42. });
+    /// assert_eq!(widget.size(), Size { w: 23., h: 42. });
+    /// # }
+    /// ```
     fn set_size (&mut self, size: &Size) {
         self.stub_mut().layout.size = *size;
     }
@@ -233,6 +426,21 @@ pub trait Widget : DowncastSync {
     /// Returns the [Layout](struct.Layout.html) (drawing rect) of the widget.
     ///
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 0., y: 0. },
+    ///     size: Size { w: 0., h: 0. }
+    /// };
+     /// assert_eq!(widget.layout(), layout);
+    /// # }
+    /// ```
     fn layout(&self) -> Layout {
         self.stub().layout
     }
@@ -240,6 +448,22 @@ pub trait Widget : DowncastSync {
     /// sets the Layout of the widget to `layout`
     ///
     /// Probably not needed as only used once in UI
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 23., y: 42. },
+    ///     size: Size { w: 137., h: 93. }
+    /// };
+    /// widget.set_layout(&layout);
+    /// assert_eq!(widget.layout(), layout);
+    /// # }
+    /// ```
     fn set_layout(&mut self, layout: &Layout) {
         self.stub_mut().layout = *layout;
     }
@@ -254,6 +478,21 @@ pub trait Widget : DowncastSync {
     /// Returns true iff the widget is currently hovered.
     ///
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// assert!(!widget.is_hovered());
+    /// widget.pointer_enter_wrap();
+    /// assert!(widget.is_hovered());
+    /// widget.pointer_leave_wrap();
+    /// assert!(!widget.is_hovered());
+    /// # }
+    /// ```
     fn is_hovered(&self) -> bool {
         self.stub().hovered
     }
@@ -261,6 +500,26 @@ pub trait Widget : DowncastSync {
     /// Returns true iff the widget's Layout is containing `pos`.
     ///
     /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 23., y: 42. },
+    ///     size: Size { w: 137., h: 93. }
+    /// };
+    /// widget.set_layout(&layout);
+    /// assert!(widget.is_hit_by(Coord { x: 25., y: 45. }));
+    /// assert!(!widget.is_hit_by(Coord { x: 15., y: 45. }));
+    /// assert!(!widget.is_hit_by(Coord { x: 163., y: 45. }));
+    /// assert!(!widget.is_hit_by(Coord { x: 25., y: 35. }));
+    /// assert!(!widget.is_hit_by(Coord { x: 25., y: 137. }));
+    /// # }
+    /// ```
     fn is_hit_by (&self, pos: Coord) -> bool {
         let layout = self.stub().layout;
 
@@ -271,6 +530,44 @@ pub trait Widget : DowncastSync {
         (pos.x > x1 && pos.x < x2) && (pos.y > y1 && pos.y < y2)
     }
 
+    /// Returns true iff the widget's Layout is intersecting `pos`.
+    ///
+    /// Usually not to be reimplemented.
+    /// ```
+    /// # use pugl_sys::*;
+    /// # #[macro_use] extern crate pugl_ui;
+    /// # use pugl_ui::widget::*;
+    /// # #[derive(Default)] struct DummyWidget { stub: WidgetStub }
+    /// # impl Widget for DummyWidget { widget_stub!(); }
+    /// # fn main() {
+    /// let mut widget = DummyWidget::default();
+    /// let layout = Layout {
+    ///     pos: Coord { x: 23., y: 42. },
+    ///     size: Size { w: 137., h: 93. }
+    /// };
+    /// widget.set_layout(&layout);
+    /// assert!(widget.intersects_with(
+    ///     Coord { x: 12., y: 23. },
+    ///     Size { w: 23., h: 23. }
+    /// ));
+    /// assert!(widget.intersects_with(
+    ///     Coord { x: 150., y: 120. },
+    ///     Size { w: 23., h: 23. }
+    /// ));
+    /// assert!(!widget.intersects_with(
+    ///     Coord { x: 162., y: 132. },
+    ///     Size { w: 23., h: 23. }
+    /// ));
+    /// assert!(!widget.intersects_with(
+    ///     Coord { x: 12., y: 23. },
+    ///     Size { w: 3., h: 3. }
+    /// ));
+    /// assert!(widget.intersects_with(
+    ///     Coord { x: 12., y: 23. },
+    ///     Size { w: 163., h: 143. }
+    /// ));
+    /// # }
+    /// ```
     fn intersects_with(&self, pos: Coord, size: Size) -> bool {
         let layout = self.layout();
 
@@ -336,7 +633,7 @@ pub trait Widget : DowncastSync {
 impl_downcast!(sync Widget);
 
 /// The rectangle the widget is covering
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Debug, PartialEq)]
 pub struct Layout {
     pub pos: Coord,
     pub size: Size
@@ -429,5 +726,71 @@ macro_rules! widget_stub {
         fn stub_mut (&mut self) -> &mut $crate::widget::WidgetStub {
             &mut self.stub
         }
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[derive(Default)]
+    struct DummyWidget {
+        stub: WidgetStub
+    }
+
+    impl Widget for DummyWidget {
+        widget_stub!();
+    }
+
+    #[test]
+    fn widget_needs_repaint() {
+        let mut widget = DummyWidget::default();
+        assert!(!widget.needs_repaint());
+        widget.ask_for_repaint();
+        assert!(widget.needs_repaint());
+        assert!(!widget.needs_repaint());
+    }
+
+    #[test]
+    fn widget_set_focus_repaint() {
+        let mut widget = DummyWidget::default();
+        assert!(!widget.needs_repaint());
+        widget.set_focus(true);
+        assert!(widget.needs_repaint());
+        widget.set_focus(false);
+        assert!(widget.needs_repaint());
+    }
+
+    #[test]
+    fn widget_set_focus_twice_true() {
+        let mut widget = DummyWidget::default();
+        assert!(!widget.needs_repaint());
+        widget.set_focus(true);
+        assert!(widget.needs_repaint());
+        widget.set_focus(true);
+        assert!(!widget.needs_repaint());
+    }
+
+    #[test]
+    fn widget_set_focus_twice_false() {
+        let mut widget = DummyWidget::default();
+        assert!(!widget.needs_repaint());
+        widget.set_focus(false);
+        assert!(!widget.needs_repaint());
+    }
+
+    #[test]
+    fn widget_pointer_enter_repaint() {
+        let mut widget = DummyWidget::default();
+        widget.pointer_enter_wrap();
+        assert!(widget.needs_repaint());
+    }
+
+    #[test]
+    fn widget_pointer_leave_repaint() {
+        let mut widget = DummyWidget::default();
+        widget.pointer_leave_wrap();
+        assert!(widget.needs_repaint());
     }
 }
