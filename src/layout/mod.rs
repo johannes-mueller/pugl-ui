@@ -33,7 +33,8 @@
 //!   layouter can choose to expand widgets to fit the layout better,
 //!   if the widget signals expandability.  During size application
 //!   the layouter also sets the position of the widget.
-//!   All this happens in [`LayouterImpl::apply_layouts()`](trait.LayouterImpl.html#tymethod.apply_layouts).
+//!   All this happens in
+//!   [`LayouterImpl::apply_layouts()`](trait.LayouterImpl.html#tymethod.apply_layouts).
 //!
 use downcast_rs::DowncastSync;
 
@@ -54,17 +55,22 @@ pub use layoutwidget::*;
 ///
 pub trait Layouter : Default + Clone + Copy {
 
-    /// A type to describe the target where the Layouter is supposed to put the widget.
+    /// A type to describe the target where the `Layouter` is supposed
+    /// to put the widget.
     type Target;
 
     /// The actual layout performing type
     type Implementor: LayouterImpl;
 
-    /// Supposed to create a heap allocated instance of the `Implementor` type.
+    /// Supposed to create a heap allocated instance of the
+    /// `Implementor` type.
     fn new_implementor() -> Box<dyn LayouterImpl>;
 
     /// Supposed to register the widget `subnode_id`
-    fn pack(&mut self, layout_impl: &mut Self::Implementor, subnode_id: widget::Id, target: Self::Target);
+    fn pack(&mut self,
+            layout_impl: &mut Self::Implementor,
+            subnode_id: widget::Id,
+            target: Self::Target);
 
     /// Supposed to indicate if the layout is expandable
     ///
@@ -73,12 +79,15 @@ pub trait Layouter : Default + Clone + Copy {
     fn expandable() -> (bool, bool);
 }
 
-/// A trait to perform the layouting speicified by [`Layouter`](trait.Layouter.html) trait object.
+/// A trait to perform the layouting speicified by
+/// [`Layouter`](trait.Layouter.html) trait object.
 pub trait LayouterImpl: DowncastSync {
 
-    /// Supposed to calculate an apply the layout (position and size) of each widget in the layout.
+    /// Supposed to calculate an apply the layout (position and size)
+    /// of each widget in the layout.
     ///
-    /// The layouter can expand the widget's size if the widgets is expandable.
+    /// The layouter can expand the widget's size if the widgets is
+    /// expandable.
     fn apply_layouts(
         &self,
         widgets: &mut Vec<Box<dyn widget::Widget>>,
@@ -86,7 +95,8 @@ pub trait LayouterImpl: DowncastSync {
         orig_pos: sys::Coord,
         available_size: sys::Size);
 
-    /// Supposed to calculate the size of the layout by asking all the child widgets for their size.
+    /// Supposed to calculate the size of the layout by asking all the
+    /// child widgets for their size.
     ///
     fn calc_size(
         &self,

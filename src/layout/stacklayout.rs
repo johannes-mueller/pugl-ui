@@ -7,19 +7,29 @@ use crate::layout::*;
 use crate::ui;
 use crate::widget::*;
 
+/// Amount of spacing of padding in a stacked layout.
 pub type Spacing = f64;
 
+/// `Layouter::Target` of stack layouters/
+///
+/// `Front` means stack the widget before the front; `Back` means
+/// stack the widget behind the back.
 pub enum StackDirection {
     Front,
     Back
 }
 
+/// Layouter to stack widgets horizontally
 #[derive(Clone, Copy, Default, Debug)]
 pub struct HorizontalLayouter;
 
+/// Layouter to stack widgets vertically
 #[derive(Clone, Copy, Default, Debug)]
 pub struct VerticalLayouter;
 
+/// Dummy widget to leave space between two widgets. The available
+/// space is shared between the `Spacer` widgets. Similar to TeX's
+/// `\hfill` or `\vfill` commands.
 #[derive(Default)]
 pub struct Spacer {
     stub: WidgetStub,
