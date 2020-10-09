@@ -58,7 +58,7 @@ pub struct WidgetNode {
 }
 
 impl WidgetNode {
-    pub(crate) fn new(id: Id) -> WidgetNode {
+    pub(crate) fn new_leaf(id: Id) -> WidgetNode {
         WidgetNode {
             id,
             layouter: None,
@@ -66,8 +66,20 @@ impl WidgetNode {
         }
     }
 
-    fn set_layouter(&mut self, layouter: Box<dyn LayouterImpl>) {
-        self.layouter = Some(layouter);
+    pub(crate) fn new_node<L: Layouter>(id: Id) -> WidgetNode {
+        WidgetNode {
+            id,
+            layouter: Some(L::new_implementor()),
+            children: Vec::new()
+        }
+    }
+
+    pub(crate) fn root<L: Layouter>() -> WidgetNode {
+        WidgetNode {
+            id: 0,
+            layouter: Some(L::new_implementor()),
+            children: Vec::new()
+        }
     }
 
     /// Recursively completes the path to widget `id``
@@ -218,7 +230,7 @@ impl WidgetNode {
 ///
 pub struct UI<RW: Widget + 'static> {
     widgets: Vec<Box<dyn Widget>>,
-    root_widget: WidgetNode,
+    root_widget_node: WidgetNode,
     unlayouted_nodes: HashMap<Id, WidgetNode>,
     root_widget_handle: LayoutWidgetHandle<VerticalLayouter, RW>,
     view: PuglViewFFI,
@@ -240,13 +252,9 @@ impl<RW: Widget + 'static> UI<RW> {
     pub fn new(view: PuglViewFFI, root_widget: Box<RW>) -> UI<RW> {
         UI {
             view,
-            root_widget: WidgetNode {
-                id: 0,
-                layouter: Some(VerticalLayouter::new_implementor()),
-                children: vec![]
-            },
+            root_widget_node: WidgetNode::root::<VerticalLayouter>(),
             unlayouted_nodes: HashMap::new(),
-            root_widget_handle: LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0)),
+            root_widget_handle: LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::new(0)),
             focused_widget: 0,
             widgets: vec![root_widget],
             drag_ongoing: false,
@@ -270,14 +278,19 @@ impl<RW: Widget + 'static> UI<RW> {
         ui
     }
 
+    fn push_widget<W: Widget>(&mut self, widget: Box<W>) -> Id {
+        let id = self.widgets.len();
+        self.widgets.push(widget);
+        id
+    }
+
     /// Registers a new widget in the `UI`.
     ///
     /// The instance of the widget must be passed heap allocated in a `Box`.
     /// Returns a `WidgetHandle` to the widget.
     pub fn new_widget<W: Widget>(&mut self, widget: Box<W>) -> WidgetHandle<W> {
-        let id = self.widgets.len();
-        self.widgets.push(widget);
-        self.unlayouted_nodes.insert(id, WidgetNode::new(id));
+        let id = self.push_widget(widget);
+        self.unlayouted_nodes.insert(id, WidgetNode::new_leaf(id));
 
         WidgetHandle::<W>::new(id)
     }
@@ -287,14 +300,9 @@ impl<RW: Widget + 'static> UI<RW> {
     /// Returns a `LayoutWidgetHandle to the `Layouter` object.
     pub fn new_layouter<L>(&mut self) -> LayoutWidgetHandle<L, LayoutWidget>
     where L: Layouter {
-        let lw = self.new_widget(Box::new(LayoutWidget::default()));
-        self.set_layouter::<L>(lw)
-    }
-
-    fn set_layouter<L>(&mut self, lw: WidgetHandle<LayoutWidget>) -> LayoutWidgetHandle<L, LayoutWidget>
-    where L: Layouter {
-        self.find_node(lw.id()).set_layouter(L::new_implementor());
-        LayoutWidgetHandle::<L, LayoutWidget>::new(lw)
+        let id = self.push_widget(Box::new(LayoutWidget::default()));
+        self.unlayouted_nodes.insert(id, WidgetNode::new_node::<L>(id));
+        LayoutWidgetHandle::<L, LayoutWidget>::new(WidgetHandle::new(id))
     }
 
     /// Adds a spacing widget to a layouter.
@@ -337,8 +345,8 @@ impl<RW: Widget + 'static> UI<RW> {
         let orig_size = self.widgets[0].size();
         let new_size = {
             let widgets = &mut self.widgets;
-            self.root_widget.detect_expandables(widgets);
-            self.root_widget.calc_widget_sizes(widgets);
+            self.root_widget_node.detect_expandables(widgets);
+            self.root_widget_node.calc_widget_sizes(widgets);
             let size = widgets[0].size();
             let new_size = if (orig_size.w > size.w) || (orig_size.h > size.h) {
                 orig_size
@@ -346,7 +354,7 @@ impl<RW: Widget + 'static> UI<RW> {
                 size
             };
             widgets[0].set_size (&new_size);
-            self.root_widget.apply_sizes(widgets, Default::default());
+            self.root_widget_node.apply_sizes(widgets, Default::default());
             new_size
         };
         self.widgets[0].set_layout(&Layout { pos: Default::default(), size: new_size });
@@ -506,8 +514,8 @@ impl<RW: Widget + 'static> UI<RW> {
             Some(l) => l,
             None => {
                 let path = VecDeque::new();
-                let (path, _) = self.root_widget.search(path, id);
-                self.root_widget.get_node_by_path(path)
+                let (path, _) = self.root_widget_node.search(path, id);
+                self.root_widget_node.get_node_by_path(path)
             }
         }
     }
@@ -519,7 +527,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
     fn exposed (&mut self, expose: &ExposeArea, cr: &cairo::Context) {
         let mut expose_queue: Vec<Id> = Vec::with_capacity(self.widgets.len());
         cr.scale(self.scale_factor, self.scale_factor);
-        self.make_expose_queue(&self.root_widget, expose, &mut expose_queue);
+        self.make_expose_queue(&self.root_widget_node, expose, &mut expose_queue);
         for wid in expose_queue {
             self.widgets[wid].exposed(expose, cr);
         }
@@ -574,7 +582,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
             }
         };
 
-        let mut event_path = self.event_path(&self.root_widget, ev.pos(), VecDeque::new());
+        let mut event_path = self.event_path(&self.root_widget_node, ev.pos(), VecDeque::new());
         let mut evop = Some(ev);
 
         if let Some(id) = event_path.back() {
