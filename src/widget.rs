@@ -731,7 +731,7 @@ macro_rules! widget_stub {
 
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[derive(Default)]
