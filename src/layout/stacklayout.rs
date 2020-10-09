@@ -280,3 +280,176 @@ impl Layouter for VerticalLayouter {
         (false, true)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::ui::*;
+    use crate::widget::*;
+    use crate::layout::*;
+
+    #[derive(Default)]
+    struct RootWidget {
+        stub: WidgetStub
+    }
+
+    impl Widget for RootWidget {
+        widget_stub!();
+    }
+
+    #[derive(Default)]
+    struct NotExpandable {
+        stub: WidgetStub
+    }
+
+    impl Widget for NotExpandable {
+        widget_stub!();
+
+        fn min_size(&self) -> Size {
+            Size { w: 23., h: 42. }
+        }
+    }
+
+    #[derive(Default)]
+    struct WidthExpandable {
+        stub: WidgetStub
+    }
+
+    impl Widget for WidthExpandable {
+        widget_stub!();
+
+        fn min_size(&self) -> Size {
+            Size { w: 23., h: 42. }
+        }
+
+        fn width_expandable(&self) -> bool {
+            true
+        }
+    }
+
+    #[derive(Default)]
+    struct HeightExpandable {
+        stub: WidgetStub
+    }
+
+    impl Widget for HeightExpandable {
+        widget_stub!();
+
+        fn min_size(&self) -> Size {
+            Size { w: 23., h: 42. }
+        }
+
+        fn height_expandable(&self) -> bool {
+            true
+        }
+    }
+
+    #[derive(Default)]
+    struct BothExpandable {
+        stub: WidgetStub
+    }
+
+    impl Widget for BothExpandable {
+        widget_stub!();
+
+        fn min_size(&self) -> Size {
+            Size { w: 23., h: 42. }
+        }
+
+        fn width_expandable(&self) -> bool {
+            true
+        }
+        fn height_expandable(&self) -> bool {
+            true
+        }
+    }
+
+    #[test]
+    fn layout_two_not_expandable_widgets_horizontally() {
+        let mut root = WidgetNode {
+            id: 0,
+            layouter: Some(HorizontalLayouter::new_implementor()),
+            children: vec![]
+        };
+
+        let mut widgets: Vec<Box<dyn Widget>> = vec![
+            Box::new(RootWidget::default()),
+            Box::new(NotExpandable::default()),
+            Box::new(NotExpandable::default())
+        ];
+
+        let root_widget_handle = LayoutWidgetHandle::<HorizontalLayouter, RootWidget>::new(WidgetHandle::<RootWidget>::new(0));
+
+        let node_1 = WidgetNode::new(1);
+        root.children.push(node_1);
+        root.pack(1, root_widget_handle, StackDirection::Front);
+
+        let node_2 = WidgetNode::new(2);
+        root.children.push(node_2);
+        root.pack(2, root_widget_handle, StackDirection::Front);
+
+        let size = root.layouter.as_ref().unwrap().calc_size(&mut widgets, root.children.as_slice());
+
+        assert_eq!(size, Size { w: 2.*23.+5., h: 42. });
+
+        assert_eq!(widgets[2].size(), Size { w: 23., h: 42.});
+        assert_eq!(widgets[1].size(), Size { w: 23., h: 42.});
+
+        root.layouter.unwrap().apply_layouts(
+            &mut widgets,
+            root.children.as_slice(),
+            Coord::default(),
+            Size { w: 2.*23.+5., h: 42. }
+        );
+
+        assert_eq!(widgets[2].pos(), Coord { x: 0., y: 0.});
+        assert_eq!(widgets[1].pos(), Coord { x: 28., y: 0.});
+        assert_eq!(widgets[2].size(), Size { w: 23., h: 42.});
+        assert_eq!(widgets[1].size(), Size { w: 23., h: 42.});
+    }
+
+
+    #[test]
+    fn layout_two_widgets_one_width_expandable_horizontally() {
+        let mut root = WidgetNode {
+            id: 0,
+            layouter: Some(HorizontalLayouter::new_implementor()),
+            children: vec![]
+        };
+
+        let mut widgets: Vec<Box<dyn Widget>> = vec![
+            Box::new(RootWidget::default()),
+            Box::new(NotExpandable::default()),
+            Box::new(WidthExpandable::default())
+        ];
+
+        let root_widget_handle = LayoutWidgetHandle::<HorizontalLayouter, RootWidget>::new(WidgetHandle::<RootWidget>::new(0));
+
+        let node_1 = WidgetNode::new(1);
+        root.children.push(node_1);
+        root.pack(1, root_widget_handle, StackDirection::Front);
+
+        let node_2 = WidgetNode::new(2);
+        root.children.push(node_2);
+        root.pack(2, root_widget_handle, StackDirection::Front);
+
+        let size = root.layouter.as_ref().unwrap().calc_size(&mut widgets, root.children.as_slice());
+
+        assert_eq!(size, Size { w: 2.*23.+5., h: 42. });
+
+        assert_eq!(widgets[2].size(), Size { w: 23., h: 42.});
+        assert_eq!(widgets[1].size(), Size { w: 23., h: 42.});
+
+        root.layouter.unwrap().apply_layouts(
+            &mut widgets,
+            root.children.as_slice(),
+            Coord::default(),
+            Size { w: 2.*23.+5.+15., h: 42. }
+        );
+
+        assert_eq!(widgets[2].pos(), Coord { x: 0., y: 0.});
+        assert_eq!(widgets[1].pos(), Coord { x: 23.+5.+15., y: 0.});
+        assert_eq!(widgets[2].size(), Size { w: 23.+15., h: 42.});
+        assert_eq!(widgets[1].size(), Size { w: 23., h: 42.});
+    }
+}

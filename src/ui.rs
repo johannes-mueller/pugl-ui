@@ -53,12 +53,12 @@ impl EventState {
 /// See ['layout'](../layout/index.html) for principles about widget layouting.
 pub struct WidgetNode {
     pub(crate) id: Id,
-    layouter: Option<Box<dyn LayouterImpl>>,
+    pub(crate) layouter: Option<Box<dyn LayouterImpl>>,
     pub(crate) children: Vec<WidgetNode>
 }
 
 impl WidgetNode {
-    fn new(id: Id) -> WidgetNode {
+    pub(crate) fn new(id: Id) -> WidgetNode {
         WidgetNode {
             id,
             layouter: None,
@@ -108,7 +108,7 @@ impl WidgetNode {
             .downcast_mut::<L::Implementor>().expect("downcast of layouter failed")
     }
 
-    fn pack<L: Layouter, W: Widget>(&mut self, widget: Id, mut parent: LayoutWidgetHandle<L, W>, target: L::Target) {
+    pub(crate) fn pack<L: Layouter, W: Widget>(&mut self, widget: Id, mut parent: LayoutWidgetHandle<L, W>, target: L::Target) {
         let subnode_id = match self.children.iter().position(|ref node| node.id == widget) {
             Some(id) => id,
             None => {
@@ -238,7 +238,6 @@ impl<RW: Widget + 'static> UI<RW> {
     /// [`pugl-sys`](https://docs.rs/pugl-sys) crate as interface to
     /// the windowing system.
     pub fn new(view: PuglViewFFI, root_widget: Box<RW>) -> UI<RW> {
-        let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0));
         UI {
             view,
             root_widget: WidgetNode {
@@ -247,7 +246,7 @@ impl<RW: Widget + 'static> UI<RW> {
                 children: vec![]
             },
             unlayouted_nodes: HashMap::new(),
-            root_widget_handle,
+            root_widget_handle: LayoutWidgetHandle::<VerticalLayouter, RW>::new(WidgetHandle::<RW>::new(0)),
             focused_widget: 0,
             widgets: vec![root_widget],
             drag_ongoing: false,
@@ -322,7 +321,7 @@ impl<RW: Widget + 'static> UI<RW> {
         let new_node = self.unlayouted_nodes.remove(&id).expect("widget already layouted?");
         let node = self.find_node(parent.widget().id());
 
-        node.children.push (new_node);
+        node.children.push(new_node);
         node.pack(id, parent, target);
     }
 
@@ -618,7 +617,7 @@ impl<RW: Widget> PuglViewTrait for UI<RW> {
     }
 
     fn resize (&mut self, size: Size) {
-        self.widgets[0].set_size (&size.scale(1./self.scale_factor));
+        self.widgets[0].set_size(&size.scale(1./self.scale_factor));
         self.do_layout();
     }
 
