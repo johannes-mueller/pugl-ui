@@ -340,7 +340,8 @@ pub trait Widget : DowncastSync {
         self.stub_mut().layout.size.h = height;
     }
 
-    /// Expands the width of the widget by `ammount`.
+    /// Expands the width of the widget by `amount`
+    /// if it is `width_expandable()`.
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
@@ -354,14 +355,17 @@ pub trait Widget : DowncastSync {
     /// let mut widget = DummyWidget::default();
     /// widget.set_width(23.);
     /// widget.expand_width(42.);
-    /// assert_eq!(widget.size().w, 65.);
+    /// assert_eq!(widget.size().w, 23.);
     /// # }
     /// ```
-    fn expand_width (&mut self, ammount: f64) {
-        self.stub_mut().layout.size.w += ammount;
+    fn expand_width (&mut self, amount: f64) {
+        if self.width_expandable() {
+            self.stub_mut().layout.size.w += amount;
+        }
     }
 
-    /// Expands the width of the widget by `ammount`.
+    /// Expands the width of the widget by `amount`
+    /// if it is `height_expandable()`.
     ///
     /// Usually called by the layouter.
     /// Usually not to be reimplemented.
@@ -375,11 +379,13 @@ pub trait Widget : DowncastSync {
     /// let mut widget = DummyWidget::default();
     /// widget.set_height(23.);
     /// widget.expand_height(42.);
-    /// assert_eq!(widget.size().h, 65.);
+    /// assert_eq!(widget.size().h, 23.);
     /// # }
     /// ```
-    fn expand_height (&mut self, ammount: f64) {
-        self.stub_mut().layout.size.h += ammount;
+    fn expand_height (&mut self, amount: f64) {
+        if self.height_expandable() {
+            self.stub_mut().layout.size.h += amount;
+        }
     }
 
     /// Sets the position of the widget to `pos`.

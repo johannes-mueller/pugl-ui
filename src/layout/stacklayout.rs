@@ -110,36 +110,67 @@ impl Default for HorizontalLayouterImpl {
 impl LayouterImpl for HorizontalLayouterImpl {
     fn apply_layouts(&self, widgets: &mut Vec<Box<dyn Widget>>, children: &[ui::WidgetNode],
                      orig_pos: Coord, size_avail: Size) {
+
+        let height_avail = size_avail.h - 2.*self.d.padding;
+
+        for sn in self.d.subnodes.iter() {
+            let widget = &mut widgets[children[*sn].id];
+            if widget.height_expandable() {
+                widget.set_height(height_avail);
+            }
+        }
+
         let sized_widgets = self.d.subnodes.iter()
             .filter(|&&sn| widgets[children[sn].id].sized_width())
             .count();
 
         let width_avail = size_avail.w - self.d.spacing * (sized_widgets - 1) as f64  - 2.*self.d.padding;
-        let height_avail = size_avail.h - 2.*self.d.padding;
-        let (expanders, width_avail) = self.d.subnodes.iter().fold((0, width_avail), |(exp, wa), sn| {
-            let wgt = &widgets[children[*sn].id];
-            (if wgt.width_expandable() { exp + 1 } else { exp },  wa - wgt.size().w)
+
+        let natural_width = self.d.subnodes.iter().fold(0.0, |total_width, sn| {
+            total_width + widgets[children[*sn].id].min_size().w
         });
-        let expand_each = width_avail / expanders as f64;
+
+        let expandable_width = width_avail - natural_width;
+
+        let spacers = self.d.subnodes.iter()
+            .filter(|&&sn| widgets[children[sn].id].downcast_mut::<Spacer>().is_some())
+            .count();
+
+        let expandable_widgets = self.d.subnodes.iter()
+            .filter(|&&sn| widgets[children[sn].id].width_expandable())
+            .count();
+
+        if spacers > 0 {
+            let expand_each = expandable_width / spacers as f64;
+            for sn in self.d.subnodes.iter() {
+                let widget = &mut widgets[children[*sn].id];
+                if widget.downcast_mut::<Spacer>().is_some() {
+                    widget.expand_width(expand_each);
+                }
+            }
+        } else {
+            let expand_each = expandable_width / expandable_widgets as f64;
+            for sn in self.d.subnodes.iter() {
+                let widget = &mut widgets[children[*sn].id];
+                if widget.downcast_mut::<Spacer>().is_none() {
+                    widget.expand_width(expand_each);
+                }
+            }
+        }
 
         let mut pos = orig_pos + Coord { x: self.d.padding, y: self.d.padding };
-        let mut last_was_sized = false;
+        let mut spacing = 0.0;
         for sn in self.d.subnodes.iter() {
             let width = {
                 let widget = &mut widgets[children[*sn].id];
-
-                if widget.width_expandable() {
-                    widget.expand_width(expand_each);
+                if !widget.sized_width() {
+                    spacing = 0.0;
                 }
-                if widget.height_expandable() {
-                    widget.set_height(height_avail);
-                }
-                let sized = widget.sized_width();
-                if sized && last_was_sized {
-                    pos += Coord { x: self.d.spacing, y: 0.0 };
-                }
-                last_was_sized = sized;
+                pos += Coord { x: spacing, y: 0.0 };
                 widget.set_pos(&pos);
+                if widget.sized_width() {
+                    spacing = self.d.spacing;
+                }
                 widget.size().w
             };
             children[*sn].apply_sizes(widgets, pos);
@@ -617,6 +648,45 @@ mod tests {
         assert_eq!(widgets[w1].pos(), Coord { x: 10., y: 0.});
         assert_eq!(widgets[w1].size(), Size { w: 23., h: 42.});
         assert_eq!(widgets[sp1].pos(), Coord { x: 23.+10., y: 0.});
+        assert_eq!(widgets[sp1].size(), Size { w: 10., h: 0.});
+    }
+
+    #[test]
+    fn layout_one_widget_width_expandable_with_two_spacers_expansion_horizontally() {
+        let mut root = WidgetNode::root::<HorizontalLayouter>();
+        let mut widgets: Vec<Box<dyn Widget>> = vec![Box::new(RootWidget::default())];
+
+        let root_widget_handle = LayoutWidgetHandle::<HorizontalLayouter, RootWidget>::new(WidgetHandle::new(0));
+
+        let sp1 = new_spacer::<HorizontalLayouter>(&mut widgets, &mut root);
+        root.pack(sp1, root_widget_handle, StackDirection::Front);
+
+        let w1 = new_widget::<WidthExpandable>(&mut widgets, &mut root);
+        root.pack(w1, root_widget_handle, StackDirection::Front);
+
+        let sp2 = new_spacer::<HorizontalLayouter>(&mut widgets, &mut root);
+        root.pack(sp2, root_widget_handle, StackDirection::Front);
+
+        let size = root.layouter.as_ref().unwrap().calc_size(&mut widgets, root.children.as_slice());
+
+        assert_eq!(size, Size { w: 12., h: 42. });
+
+        assert_eq!(widgets[w1].size(), Size { w: 12., h: 42.});
+        assert_eq!(widgets[sp1].size(), Size { w: 0., h: 0.});
+        assert_eq!(widgets[sp2].size(), Size { w: 0., h: 0.});
+
+        root.layouter.unwrap().apply_layouts(
+            &mut widgets,
+            root.children.as_slice(),
+            Coord::default(),
+            Size { w: 12.+20., h: 42. }
+        );
+
+        assert_eq!(widgets[sp2].pos(), Coord { x: 0., y: 0.});
+        assert_eq!(widgets[sp2].size(), Size { w: 10., h: 0.});
+        assert_eq!(widgets[w1].pos(), Coord { x: 10., y: 0.});
+        assert_eq!(widgets[w1].size(), Size { w: 12., h: 42.});
+        assert_eq!(widgets[sp1].pos(), Coord { x: 12.+10., y: 0.});
         assert_eq!(widgets[sp1].size(), Size { w: 10., h: 0.});
     }
 
