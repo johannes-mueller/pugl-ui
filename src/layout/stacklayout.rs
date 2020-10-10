@@ -123,8 +123,9 @@ impl LayouterImpl for HorizontalLayouterImpl {
         let expand_each = width_avail / expanders as f64;
 
         let mut pos = orig_pos + Coord { x: self.d.padding, y: self.d.padding };
+        let mut last_was_sized = false;
         for sn in self.d.subnodes.iter() {
-            let (width, sized_width) = {
+            let width = {
                 let widget = &mut widgets[children[*sn].id];
 
                 if widget.width_expandable() {
@@ -133,15 +134,17 @@ impl LayouterImpl for HorizontalLayouterImpl {
                 if widget.height_expandable() {
                     widget.set_height(height_avail);
                 }
+                let sized = widget.sized_width();
+                if sized && last_was_sized {
+                    pos += Coord { x: self.d.spacing, y: 0.0 };
+                }
+                last_was_sized = sized;
                 widget.set_pos(&pos);
-                (widget.size().w, widget.sized_width())
+                widget.size().w
             };
             children[*sn].apply_sizes(widgets, pos);
 
             pos += Coord { x: width, y: 0.0 };
-            if sized_width {
-                pos += Coord { x: self.d.spacing, y: 0.0 };
-            }
         }
     }
 
@@ -155,7 +158,9 @@ impl LayouterImpl for HorizontalLayouterImpl {
             if size.h > need.h {
                 need.h = size.h;
             }
-            need.w += self.d.spacing;
+            if widgets[children[*subnode].id].sized_width() {
+                need.w += self.d.spacing;
+            }
         }
         need.w += self.d.padding - self.d.spacing;
         need.h += 2.*self.d.padding;
