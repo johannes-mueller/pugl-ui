@@ -30,7 +30,6 @@ pub struct VerticalLayouter;
 /// Dummy widget to leave space between two widgets. The available
 /// space is shared between the `Spacer` widgets. Similar to TeX's
 /// `\hfill` or `\vfill` commands.
-#[derive(Default)]
 pub struct Spacer {
     stub: WidgetStub,
     width_expandable: bool,
@@ -49,9 +48,12 @@ impl Widget for Spacer {
 }
 
 impl Spacer {
-    pub(crate) fn set_expandable(&mut self, (we, he): (bool, bool)) {
-        self.width_expandable = we;
-        self.height_expandable = he;
+    pub(crate) fn new((width_expandable, height_expandable): (bool, bool)) -> Self {
+        Self {
+            stub: WidgetStub::default(),
+            width_expandable,
+            height_expandable
+        }
     }
 }
 

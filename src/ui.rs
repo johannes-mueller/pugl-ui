@@ -310,7 +310,7 @@ impl<RW: Widget + 'static> UI<RW> {
     /// This is a convenience function
     pub fn add_spacer<L>(&mut self, parent: LayoutWidgetHandle<L, LayoutWidget>, target: L::Target)
     where L: Layouter {
-        let sp = self.new_widget(Box::new(Spacer::default()));
+        let sp = self.new_widget(Box::new(Spacer::new(L::expandable())));
         self.pack_to_layout(sp, parent, target);
     }
 
@@ -322,9 +322,6 @@ impl<RW: Widget + 'static> UI<RW> {
           PW: Widget {
 
         let id = widget.id();
-        if let Some(sp) = self.widgets[id].downcast_mut::<Spacer>() {
-            sp.set_expandable(L::expandable());
-        }
 
         let new_node = self.unlayouted_nodes.remove(&id).expect("widget already layouted?");
         let node = self.find_node(parent.widget().id());
