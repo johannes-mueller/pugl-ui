@@ -114,7 +114,7 @@ impl WidgetNode {
         }
     }
 
-    fn layouter_impl<L: Layouter>(&mut self) -> &mut L::Implementor {
+    pub(crate) fn layouter_impl<L: Layouter>(&mut self) -> &mut L::Implementor {
         self.layouter
             .as_deref_mut().expect("::pack(), no layouter found")
             .downcast_mut::<L::Implementor>().expect("downcast of layouter failed")
@@ -140,6 +140,7 @@ impl WidgetNode {
     }
 
     pub(crate) fn calc_widget_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>) -> Size {
+        eprintln!("calc_widget_sizes() {} children", self.children.len());
         if self.children.is_empty() {
             let wgt = &mut widgets[self.id];
             let size = wgt.min_size();
