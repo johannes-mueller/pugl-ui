@@ -421,7 +421,7 @@ mod tests {
 
     #[cfg(feature = "testing")]
     #[test]
-    fn layout_single_widget() {
+    fn layout_single_widget_unscaled() {
         let rw = Box::new(RootWidget::default());
         let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
 
@@ -448,7 +448,7 @@ mod tests {
 
     #[cfg(feature = "testing")]
     #[test]
-    fn layout_single_widget_padding() {
+    fn layout_single_widget_padding_unscaled() {
         let rw = Box::new(RootWidget::default());
         let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
 

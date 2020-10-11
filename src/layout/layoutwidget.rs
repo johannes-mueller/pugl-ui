@@ -93,7 +93,4 @@ impl<L: layout::Layouter, W: widget::Widget> LayoutWidgetHandle<L, W> {
     pub fn layouter(&mut self) -> &mut L {
         &mut self.layouter
     }
-    pub fn expandable() -> (bool, bool) {
-        L::expandable()
-    }
 }
