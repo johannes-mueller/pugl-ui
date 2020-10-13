@@ -351,7 +351,7 @@ impl<RW: Widget + 'static> UI<RW> {
             } else {
                 size
             };
-            widgets[0].set_size (&new_size);
+            widgets[0].set_size(&new_size);
             self.root_widget_node.apply_sizes(widgets, Default::default());
             new_size
         };

@@ -177,7 +177,7 @@ pub trait Widget : DowncastSync {
     /// assert!(!widget.has_focus());
     /// # }
     /// ```
-    fn has_focus (&self) -> bool {
+    fn has_focus(&self) -> bool {
         self.stub().has_focus
     }
 
@@ -200,7 +200,7 @@ pub trait Widget : DowncastSync {
     /// assert_eq!(widget.size(), Size { w: 137., h: 93.});
     /// # }
     /// ```
-    fn size (&self) -> Size {
+    fn size(&self) -> Size {
         self.stub().layout.size
     }
 
@@ -223,7 +223,7 @@ pub trait Widget : DowncastSync {
     /// assert_eq!(widget.pos(), Coord { x: 23., y: 42. });
     /// # }
     /// ```
-    fn pos (&self) -> Coord {
+    fn pos(&self) -> Coord {
         self.stub().layout.pos
     }
 

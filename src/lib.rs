@@ -809,6 +809,58 @@ mod tests {
 
     #[cfg(feature = "testing")]
     #[test]
+    fn layout_nested_horizontal_in_vertical() {
+        let rw = Box::new(RootWidget::default());
+        let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
+
+        let widget_size_small = Size { w: 42., h: 23. };
+        let widget_size_big = Size { w: 42., h: 46. };
+        let ui = view.handle();
+        let widget_1 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size_big,
+            height_expandable: true,
+            ..Default::default()
+        }));
+        let widget_2 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size_small,
+            ..Default::default()
+        }));
+        let widget_3 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size_small,
+            ..Default::default()
+        }));
+        let widget_4 = ui.new_widget(Box::new(RectWidget {
+            min_size: widget_size_small,
+            ..Default::default()
+        }));
+
+        ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
+
+        let horizontal_layouter = ui.new_layouter::<HorizontalLayouter>();
+        ui.layouter(horizontal_layouter).set_padding(0.).set_spacing(0.);
+        ui.pack_to_layout(horizontal_layouter.widget(), ui.root_layout(), StackDirection::Front);
+
+        let vertical_layouter = ui.new_layouter::<VerticalLayouter>();
+        ui.layouter(vertical_layouter).set_padding(0.).set_spacing(0.);
+        ui.pack_to_layout(vertical_layouter.widget(), horizontal_layouter, StackDirection::Front);
+
+        ui.pack_to_layout(widget_1, horizontal_layouter, StackDirection::Front);
+        ui.pack_to_layout(widget_2, vertical_layouter, StackDirection::Front);
+        ui.pack_to_layout(widget_3, vertical_layouter, StackDirection::Front);
+        ui.pack_to_layout(widget_4, vertical_layouter, StackDirection::Front);
+
+        ui.do_layout();
+        ui.fit_window_size();
+        ui.make_resizable();
+        ui.fit_window_min_size();
+        ui.show_window();
+
+        assert_eq!(ui.widget(widget_1).size(), Size { w: 42., h: 3.*23. });
+
+    }
+
+    #[cfg(feature = "testing")]
+    #[test]
     fn two_widgets_clicks() {
         let rw = Box::new(RootWidget::default());
         let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
