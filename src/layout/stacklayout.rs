@@ -846,6 +846,57 @@ mod tests {
     }
 
     #[test]
+    fn layout_two_widgets_non_expandable_with_spacer_expansion_horizontally() {
+        let mut root = WidgetNode::root::<VerticalLayouter>();
+        let mut widgets: Vec<Box<dyn Widget>> = vec![Box::new(RootWidget::default())];
+
+        root.layouter_impl::<VerticalLayouter>().set_spacing(0.).set_padding(0.);
+        let root_widget_handle = LayoutWidgetHandle::<VerticalLayouter, RootWidget>::new(WidgetHandle::new(0));
+
+        let lw_horizontal = new_layout::<HorizontalLayouter>(&mut widgets, &mut root);
+        root.pack(lw_horizontal.widget().id(), root_widget_handle, StackDirection::Back);
+        root.children[0].layouter_impl::<HorizontalLayouter>().set_spacing(5.).set_padding(17.);
+
+        let w1 = new_widget::<NotExpandable>(&mut widgets, &mut root.children[0]);
+        root.children[0].pack(w1, lw_horizontal, StackDirection::Front);
+
+        let sp1 = new_spacer::<HorizontalLayouter>(&mut widgets, &mut root.children[0]);
+        root.children[0].pack(sp1, lw_horizontal, StackDirection::Front);
+
+        let w2 = new_widget::<NotExpandable>(&mut widgets, &mut root.children[0]);
+        root.children[0].pack(w2, lw_horizontal, StackDirection::Front);
+
+        let w3 = new_widget::<NotExpandable>(&mut widgets, &mut root);
+        root.pack(w3, root_widget_handle, StackDirection::Back);
+
+        let size = root.layouter.as_ref().unwrap().calc_size(&mut widgets, root.children.as_slice());
+
+        assert_eq!(size, Size { w: 17.+23.+5.+23.+17., h: 17.+42.+42.+17. });
+
+        assert_eq!(widgets[w1].size(), Size { w: 23., h: 42.});
+        assert_eq!(widgets[sp1].size(), Size { w: 0., h: 0.});
+        assert_eq!(widgets[w2].size(), Size { w: 23., h: 42.});
+        assert_eq!(widgets[w2].size(), Size { w: 23., h: 42.});
+
+        root.detect_expandables(&mut widgets);
+        root.layouter.unwrap().apply_layouts(
+            &mut widgets,
+            root.children.as_slice(),
+            Coord::default(),
+            size + Size { w: 30., h: 30. }
+        );
+
+        assert_eq!(widgets[w2].pos(), Coord { x: 17., y: 17.});
+        assert_eq!(widgets[w2].size(), Size { w: 23., h: 42.});
+        assert_eq!(widgets[sp1].pos(), Coord { x: 17.+23., y: 17.});
+        assert_eq!(widgets[sp1].size().w, 30.);
+        assert_eq!(widgets[sp1].size().h, 0.);
+        assert_eq!(widgets[w1].pos(), Coord { x: 17.+23.+30., y: 17.});
+        assert_eq!(widgets[w1].size(), Size { w: 23., h: 42.});
+        assert_eq!(widgets[w3].pos(), Coord { x: 0., y: 17.+42.+17. });
+    }
+
+    #[test]
     fn layout_two_not_expandable_widgets_vertically() {
         let mut root = WidgetNode::root::<VerticalLayouter>();
         let mut widgets: Vec<Box<dyn Widget>> = vec![Box::new(RootWidget::default())];
