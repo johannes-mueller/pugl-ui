@@ -809,7 +809,7 @@ mod tests {
 
     #[cfg(feature = "testing")]
     #[test]
-    fn layout_nested_horizontal_in_vertical() {
+    fn layout_nested_horizontal_in_vertical_expanded() {
         let rw = Box::new(RootWidget::default());
         let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
 
@@ -837,17 +837,22 @@ mod tests {
         ui.layouter(ui.root_layout()).set_padding(0.).set_spacing(0.);
 
         let horizontal_layouter = ui.new_layouter::<HorizontalLayouter>();
-        ui.layouter(horizontal_layouter).set_padding(0.).set_spacing(0.);
+        ui.layouter(horizontal_layouter).set_padding(0.).set_spacing(5.);
         ui.pack_to_layout(horizontal_layouter.widget(), ui.root_layout(), StackDirection::Front);
 
         let vertical_layouter = ui.new_layouter::<VerticalLayouter>();
         ui.layouter(vertical_layouter).set_padding(0.).set_spacing(0.);
-        ui.pack_to_layout(vertical_layouter.widget(), horizontal_layouter, StackDirection::Front);
+        ui.pack_to_layout(vertical_layouter.widget(), horizontal_layouter, StackDirection::Back);
 
-        ui.pack_to_layout(widget_1, horizontal_layouter, StackDirection::Front);
+        ui.pack_to_layout(widget_1, horizontal_layouter, StackDirection::Back);
         ui.pack_to_layout(widget_2, vertical_layouter, StackDirection::Front);
         ui.pack_to_layout(widget_3, vertical_layouter, StackDirection::Front);
         ui.pack_to_layout(widget_4, vertical_layouter, StackDirection::Front);
+
+        ui.do_layout();
+        let size = ui.root_widget().size();
+        ui.root_widget().set_size(&(size + Size { w: 30., h: 0. }));
+        dbg!(ui.root_widget().size());
 
         ui.do_layout();
         ui.fit_window_size();
@@ -856,7 +861,13 @@ mod tests {
         ui.show_window();
 
         assert_eq!(ui.widget(widget_1).size(), Size { w: 42., h: 3.*23. });
+        assert_eq!(ui.widget(widget_2).size(), Size { w: 42., h: 23. });
+        assert_eq!(ui.widget(widget_3).size(), Size { w: 42., h: 23. });
 
+        assert_eq!(ui.widget(widget_1).pos(), Coord { x: 42.+5., y: 0. });
+        assert_eq!(ui.widget(widget_4).pos(), Coord { x: 0., y: 0. });
+        assert_eq!(ui.widget(widget_3).pos(), Coord { x: 0., y: 23. });
+        assert_eq!(ui.widget(widget_2).pos(), Coord { x: 0., y: 46. });
     }
 
     #[cfg(feature = "testing")]

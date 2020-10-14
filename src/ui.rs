@@ -140,7 +140,6 @@ impl WidgetNode {
     }
 
     pub(crate) fn calc_widget_sizes (&self, widgets: &mut Vec<Box<dyn Widget>>) -> Size {
-        eprintln!("calc_widget_sizes() {} children", self.children.len());
         if self.children.is_empty() {
             let wgt = &mut widgets[self.id];
             let size = wgt.min_size();
@@ -159,7 +158,7 @@ impl WidgetNode {
         size
     }
 
-    fn detect_expandables(&self, widgets: &mut Vec<Box<dyn Widget>>) -> (bool, bool) {
+    pub(crate) fn detect_expandables(&self, widgets: &mut Vec<Box<dyn Widget>>) -> (bool, bool) {
         if self.children.is_empty() {
             let wgt = &widgets[self.id];
             return (wgt.width_expandable(), wgt.height_expandable())
