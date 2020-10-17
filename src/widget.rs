@@ -40,7 +40,10 @@ pub trait Widget : DowncastSync {
     /// # impl Widget for DummyWidget { widget_stub!(); }
     /// # fn main() {
     /// let ev = Event {
-    ///     data: EventType::MouseButtonPress(MouseButton { num: 1, modifiers: 0 }),
+    ///     data: EventType::MouseButtonPress(MouseButton {
+    ///         num: 1,
+    ///         modifiers: Modifiers::default()
+    ///     }),
     ///     context: Default::default()
     /// };
     /// let mut widget = DummyWidget::default();

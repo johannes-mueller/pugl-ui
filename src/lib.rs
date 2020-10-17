@@ -407,7 +407,7 @@ mod tests {
         view.queue_event(Event {
             data: EventType::KeyPress(Key {
                 key: KeyVal::Character('q'),
-                modifiers: 0,
+                modifiers: Modifiers::default(),
                 code: 0
             }),
             context: EventContext::default()
@@ -879,17 +879,17 @@ mod tests {
         let widget_size = Size { w: 42., h: 23. };
 
         view.queue_event(Event {
-            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: 0 }),
+            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: Modifiers::default() }),
             context: EventContext { pos: Coord{ x: 21., y: 11.5 }, ..Default::default() }
         });
 
         view.queue_event(Event {
-            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: 0 }),
+            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: Modifiers::default() }),
             context: EventContext { pos: Coord{ x: 21., y: 28. }, ..Default::default() }
         });
 
         view.queue_event(Event {
-            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: 0 }),
+            data: EventType::MouseButtonRelease(MouseButton { num: 1, modifiers: Modifiers::default() }),
             context: EventContext { pos: Coord{ x: 21., y: 46. }, ..Default::default() }
         });
 
@@ -991,7 +991,11 @@ mod tests {
         let mut view = PuglView::new(std::ptr::null_mut(), |pv| UI::new_scaled(pv, rw, 1.));
 
         let space_event = Event {
-            data: EventType::KeyRelease(Key { key: KeyVal::Character(' '), modifiers: 0, code: 0 }),
+            data: EventType::KeyRelease(Key {
+                key: KeyVal::Character(' '),
+                modifiers: Modifiers::default(),
+                code: 0
+            }),
             context: EventContext::default()
         };
 
