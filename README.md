@@ -1,11 +1,15 @@
 # pugl-ui – a stub for small embeddable GUI-toolkits using pugl
 
-[![Build Status][travis-badge]][travis-url] [![Current Crates.io Version][crates-badge]][crates-url]
+[![Build Status][travis-badge]][travis-url]
+[![Current Crates.io Version][crates-badge]][crates-url]
+[![Documentation Version][docs-badge]][docs-url]
 
 [travis-badge]: https://travis-ci.com/johannes-mueller/pugl-ui.svg?branch=master
 [travis-url]: https://travis-ci.com/johannes-mueller/pugl-ui
 [crates-badge]: https://img.shields.io/crates/v/pugl-ui.svg
 [crates-url]: https://crates.io/crates/pugl-ui
+[docs-badge]: https://docs.rs/pugl-ui/badge.svg
+[docs-url]: https://docs.rs/pugl-ui/
 
 pugl is a minimal portable API for embeddable GUIs https://gitlab.com/lv2/pugl/
 
